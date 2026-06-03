@@ -179,6 +179,57 @@ body {
   color: var(--text-primary);
 }
 
+/* Control Mode Selector in Header */
+.control-mode-selector {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+  margin-left: 8px;
+  height: 28px;
+  align-items: center;
+}
+
+.mode-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  height: 22px;
+  outline: none;
+}
+
+.mode-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.mode-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mode-toggle-btn svg {
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.mode-toggle-btn:hover svg,
+.mode-toggle-btn.active svg {
+  color: var(--text-primary);
+}
+
 .system-status {
   display: flex;
   gap: 10px;

@@ -1004,11 +1004,19 @@ class App {
     // Webcam Mini-Preview Toggle button
     document.getElementById('btn-toggle-cam').addEventListener('click', () => {
       if (gestures.isCameraActive) {
-        gestures.stopCamera();
+        this.setControlMode('mouse');
       } else {
-        gestures.startCamera().catch(() => {});
+        this.setControlMode('gesture');
       }
     });
+
+    // Control Mode Switcher Buttons
+    const btnModeMouse = document.getElementById('btn-mode-mouse');
+    const btnModeGesture = document.getElementById('btn-mode-gesture');
+    if (btnModeMouse && btnModeGesture) {
+      btnModeMouse.addEventListener('click', () => this.setControlMode('mouse'));
+      btnModeGesture.addEventListener('click', () => this.setControlMode('gesture'));
+    }
 
     // Settings Panel Toggle
     const settingsPanel = document.getElementById('settings-panel');
@@ -1667,17 +1675,18 @@ class App {
       onboarding.classList.add('hidden');
     }, 500);
 
-    // Webcam permission and stream trigger
-    if (enableWebcam) {
-      const webcamElement = document.getElementById('webcam');
-      const overlayElement = document.getElementById('gesture-overlay');
-      
+    // Initialize gestures once for overlay elements
+    const webcamElement = document.getElementById('webcam');
+    const overlayElement = document.getElementById('gesture-overlay');
+    if (webcamElement && overlayElement) {
       gestures.init(webcamElement, overlayElement);
-      gestures.startCamera().catch(err => {
-        console.warn("Webcam activation was bypassed:", err);
-      });
+    }
+    
+    // Set appropriate control mode based on user's choice
+    if (enableWebcam) {
+      this.setControlMode('gesture');
     } else {
-      document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
+      this.setControlMode('mouse');
     }
     
     // Load real iTunes preview URLs and artwork for default tracks
@@ -2176,6 +2185,34 @@ class App {
     
     // Update bottom player HUD to the new playing track
     this.updatePlayingTrackUI(audio.currentTrackIndex);
+  }
+
+  // Sets the control mode (mouse vs gesture) and updates the UI & Camera state
+  setControlMode(mode) {
+    const btnMouse = document.getElementById('btn-mode-mouse');
+    const btnGesture = document.getElementById('btn-mode-gesture');
+    const webcamMonitor = document.getElementById('webcam-monitor');
+    
+    if (!btnMouse || !btnGesture || !webcamMonitor) return;
+    
+    if (mode === 'mouse') {
+      btnMouse.classList.add('active');
+      btnGesture.classList.remove('active');
+      webcamMonitor.classList.add('hidden');
+      if (gestures.isCameraActive) {
+        gestures.stopCamera();
+      }
+    } else if (mode === 'gesture') {
+      btnGesture.classList.add('active');
+      btnMouse.classList.remove('active');
+      webcamMonitor.classList.remove('hidden');
+      if (!gestures.isCameraActive) {
+        gestures.startCamera().catch(err => {
+          console.warn("Webcam activation was bypassed/failed:", err);
+          this.setControlMode('mouse');
+        });
+      }
+    }
   }
 }
 
