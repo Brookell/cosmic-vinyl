@@ -1145,7 +1145,7 @@ class App {
     this.targetRotation = Math.round(this.targetRotation) + direction;
   }
 
-  focusAlbumIndex(index) {
+  focusAlbumIndex(index, warp = false) {
     if (this.isZoomed) this.deselectFocusedAlbum();
     
     // Rotate to the nearest congruent copy of index modulo NUM_ALBUMS
@@ -1153,6 +1153,10 @@ class App {
     const half = NUM_ALBUMS / 2;
     diff = ((diff + half) % NUM_ALBUMS + NUM_ALBUMS) % NUM_ALBUMS - half;
     this.targetRotation = this.targetRotation + diff;
+    
+    if (warp) {
+      this.currentRotation = this.targetRotation;
+    }
     
     this.focusedIndex = index;
     this.updateHUDTrackDetails(this.focusedIndex);
@@ -1760,14 +1764,14 @@ class App {
       // Click on item -> focuses and zooms
       item.addEventListener('click', (e) => {
         if (e.target.closest('.library-song-delete-btn') || e.target.closest('.library-song-play-btn')) return;
-        this.focusAlbumIndex(index);
+        this.focusAlbumIndex(index, true);
         this.isZoomed = true;
         this.triggerStarburstWarp();
       });
       
       item.querySelector('.library-song-play-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        this.focusAlbumIndex(index);
+        this.focusAlbumIndex(index, true);
         this.updatePlayingTrackUI(index);
         audio.play();
         this.isZoomed = true;
@@ -1802,7 +1806,7 @@ class App {
     this.rebuildCarousel();
     
     // Auto-focus and zoom-in to the new addition
-    this.focusAlbumIndex(newIdx);
+    this.focusAlbumIndex(newIdx, true);
     this.isZoomed = true;
     this.triggerStarburstWarp();
   }
@@ -1822,7 +1826,7 @@ class App {
     
     // Refocus if index was out of bounds (wrapped using modulo)
     const nextFocused = ((this.focusedIndex % NUM_ALBUMS) + NUM_ALBUMS) % NUM_ALBUMS;
-    this.focusAlbumIndex(nextFocused);
+    this.focusAlbumIndex(nextFocused, true);
     
     // Update bottom player HUD to the new playing track
     this.updatePlayingTrackUI(audio.currentTrackIndex);
