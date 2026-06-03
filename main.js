@@ -52,7 +52,7 @@ class App {
     this.pointer = new THREE.Vector2();
     
     // Mouse Trail / Dynamic Follow Light State
-    this.MAX_TRAIL_PARTICLES = 200;
+    this.MAX_TRAIL_PARTICLES = 80;
     this.trailParticles = [];
     this.trailGeometry = null;
     this.trailMaterial = null;
@@ -251,7 +251,7 @@ class App {
 
   // Create dynamic light follow and stardust particle trail for mouse movement
   createMouseTrail() {
-    this.MAX_TRAIL_PARTICLES = 200;
+    this.MAX_TRAIL_PARTICLES = 80;
     this.trailParticles = [];
     for (let i = 0; i < this.MAX_TRAIL_PARTICLES; i++) {
       this.trailParticles.push({
@@ -276,25 +276,25 @@ class App {
     const starTexture = this.generateStarTexture();
 
     this.trailMaterial = new THREE.PointsMaterial({
-      size: 0.35, // base size of stardust particles
+      size: 0.12, // smaller stardust specks for delicate look
       map: starTexture,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
-      opacity: 0.95
+      opacity: 0.55 // more transparent stardust
     });
 
     this.trailPoints = new THREE.Points(this.trailGeometry, this.trailMaterial);
     this.scene.add(this.trailPoints);
 
-    // Initial mouse positions
-    this.mouse3D = new THREE.Vector3(0, 0, 0.5);
-    this.targetMouse3D = new THREE.Vector3(0, 0, 0.5);
+    // Initial mouse positions (depth z = 2.0, further from albums)
+    this.mouse3D = new THREE.Vector3(0, 0, 2.0);
+    this.targetMouse3D = new THREE.Vector3(0, 0, 2.0);
     this.lastMouseMoveTime = 0;
 
-    // Dynamically illuminated point light following the mouse
-    this.mouseLight = new THREE.PointLight(0x00f0ff, 0, 10, 1.5);
+    // Soft point light with wider range and lower intensity (no harsh hot-spots)
+    this.mouseLight = new THREE.PointLight(0x00f0ff, 0, 20, 2.0);
     this.scene.add(this.mouseLight);
 
     this.trailSpawnIndex = 0;
@@ -305,7 +305,7 @@ class App {
     this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
     
     if (!this.mousePlane) {
-      this.mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.5); // Plane facing camera at z = 0.5
+      this.mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -2.0); // Plane facing camera at z = 2.0
     }
     
     if (this.camera) {
@@ -328,23 +328,24 @@ class App {
 
     // Fade and animate mouse light color
     if (idleTime < 2000) {
-      // Gentle color cycle matching vibrant spectrum
+      // Soft pastel color cycle
       const hue = (time * 0.08) % 1.0;
-      this.mouseLight.color.setHSL(hue, 0.9, 0.55);
+      this.mouseLight.color.setHSL(hue, 0.7, 0.5);
       
-      // Reactive intensity: brighter when moving fast
+      // Extremely soft ambient intensity: max is around 0.8
       const dist = this.mouse3D.distanceTo(this.targetMouse3D);
-      const targetIntensity = 4.0 + dist * 5.0;
+      const targetIntensity = 0.5 + dist * 1.5;
       this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, targetIntensity, 0.1);
     } else {
       this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, 0, 0.03);
     }
-    this.mouseLight.position.copy(this.mouse3D);
+    // Place point light slightly in front of particles so it shines broadly on album sleeves
+    this.mouseLight.position.set(this.mouse3D.x, this.mouse3D.y, this.mouse3D.z + 1.0);
 
     // Spawn new stardust flow particles
     if (idleTime < 2000) {
       const dist = this.mouse3D.distanceTo(this.targetMouse3D);
-      const spawnCount = Math.min(8, Math.max(2, Math.floor(dist * 35) + 2));
+      const spawnCount = Math.min(3, Math.max(1, Math.floor(dist * 12) + 1));
       
       for (let s = 0; s < spawnCount; s++) {
         const p = this.trailParticles[this.trailSpawnIndex];
@@ -357,25 +358,25 @@ class App {
         
         // Initial random velocity
         const angle = Math.random() * Math.PI * 2;
-        const speed = 0.005 + Math.random() * 0.025;
+        const speed = 0.005 + Math.random() * 0.02;
         p.velocity.set(
           Math.cos(angle) * speed,
-          Math.sin(angle) * speed + 0.003, // subtle float up
-          (Math.random() - 0.5) * 0.015
+          Math.sin(angle) * speed + 0.002, // subtle float up
+          (Math.random() - 0.5) * 0.01
         );
         
-        // Random cycling dynamic colors for follow trail
+        // Soft pastel/star stardust colors (much less saturated/bright)
         const rand = Math.random();
         if (rand < 0.4) {
-          p.color.setRGB(0.0, 0.94, 1.0); // Cyan stardust
+          p.color.setRGB(0.3, 0.75, 0.9); // Faint cyan stardust
         } else if (rand < 0.75) {
-          p.color.setRGB(0.9, 0.1, 1.0); // Violet stardust
+          p.color.setRGB(0.7, 0.45, 0.9); // Soft lilac stardust
         } else {
-          p.color.setRGB(1.0, 0.3, 0.6); // Rose stardust
+          p.color.setRGB(0.9, 0.5, 0.7); // Pastel rose stardust
         }
         
         p.life = 1.0;
-        p.maxLife = 50 + Math.floor(Math.random() * 40); // frames of life
+        p.maxLife = 25 + Math.floor(Math.random() * 20); // shorter frames of life for cleaner trail
         
         this.trailSpawnIndex = (this.trailSpawnIndex + 1) % this.MAX_TRAIL_PARTICLES;
       }
@@ -395,11 +396,11 @@ class App {
           toMouse.normalize();
           
           // Force drawing them in
-          p.velocity.addScaledVector(toMouse, 0.0008);
+          p.velocity.addScaledVector(toMouse, 0.0006);
           
           // Flow vortex swirling follow effect (cross product)
           const vortex = new THREE.Vector3(-toMouse.y, toMouse.x, 0);
-          p.velocity.addScaledVector(vortex, 0.0006);
+          p.velocity.addScaledVector(vortex, 0.0004);
         }
         
         // Kinetic drag
