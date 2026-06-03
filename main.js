@@ -46,8 +46,11 @@ class App {
     // Mouse/Pointer Fallback Drag State
     this.isDragging = false;
     this.previousPointerX = 0;
+    this.previousPointerY = 0;
     this.dragStartRotation = 0;
     this.dragDistance = 0;
+    this.gridScrollY = 0;
+    this.targetGridScrollY = 0;
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     
@@ -900,17 +903,35 @@ class App {
     this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
     this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
     
-    // Scroll Wheel rotation
+    // Scroll Wheel rotation / vertical scrolling
     this.canvas.addEventListener('wheel', (e) => {
-      this.rotationVelocity += e.deltaY * 0.0015;
+      if (this.activeView === 'grid') {
+        const COLS = 4;
+        const ROWS = Math.ceil(NUM_ALBUMS / COLS);
+        const maxScroll = Math.max(0, (ROWS - 1) * 2.2 / 2 + 1.0);
+        this.targetGridScrollY += e.deltaY * 0.004;
+        this.targetGridScrollY = Math.max(-maxScroll, Math.min(maxScroll, this.targetGridScrollY));
+      } else {
+        this.rotationVelocity += e.deltaY * 0.0015;
+      }
     }, { passive: true });
 
     // Keyboard controls
     window.addEventListener('keydown', (e) => {
+      // Ignore key controls if user is typing in the search box
+      if (document.activeElement === document.getElementById('search-input') || 
+          document.activeElement === document.getElementById('sidebar-song-search')) {
+        return;
+      }
+
       if (e.key === 'ArrowRight' || e.key === 'd') {
-        this.rotateCarousel(1); // Shift right
+        this.navigateGridOrCarousel(1, 0); // shift right
       } else if (e.key === 'ArrowLeft' || e.key === 'a') {
-        this.rotateCarousel(-1); // Shift left
+        this.navigateGridOrCarousel(-1, 0); // shift left
+      } else if (e.key === 'ArrowDown' || e.key === 's') {
+        this.navigateGridOrCarousel(0, 1); // shift down
+      } else if (e.key === 'ArrowUp' || e.key === 'w') {
+        this.navigateGridOrCarousel(0, -1); // shift up
       } else if (e.key === ' ' || e.key === 'Enter') {
         audio.togglePlay();
       } else if (e.key === 'Escape') {
@@ -1322,28 +1343,41 @@ class App {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  // --- MOUSE RAYCASTING & INERTIAL ROTATION ---
   onPointerDown(e) {
     this.isDragging = true;
     this.previousPointerX = e.clientX;
+    this.previousPointerY = e.clientY;
     this.dragStartRotation = this.targetRotation;
     this.dragDistance = 0;
   }
 
   onPointerMove(e) {
+    this.updateMousePosition(e);
+    
     if (!this.isDragging) return;
     
     const deltaX = e.clientX - this.previousPointerX;
-    this.dragDistance += Math.abs(deltaX);
+    const deltaY = e.clientY - this.previousPointerY;
+    this.dragDistance += Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // Move target rotation immediately based on drag distance (moving mouse left scrolls right)
-    const dragSensitivity = 0.0055;
-    this.targetRotation = this.targetRotation - deltaX * dragSensitivity;
-    
-    // Keep track of velocity for flinging on release
-    this.rotationVelocity = -deltaX * dragSensitivity;
+    if (this.activeView === 'grid') {
+      const COLS = 4;
+      const ROWS = Math.ceil(NUM_ALBUMS / COLS);
+      const maxScroll = Math.max(0, (ROWS - 1) * 2.2 / 2 + 1.0);
+      const scrollSensitivity = 0.007;
+      this.targetGridScrollY += deltaY * scrollSensitivity;
+      this.targetGridScrollY = Math.max(-maxScroll, Math.min(maxScroll, this.targetGridScrollY));
+    } else {
+      // Move target rotation immediately based on drag distance (moving mouse left scrolls right)
+      const dragSensitivity = 0.0055;
+      this.targetRotation = this.targetRotation - deltaX * dragSensitivity;
+      
+      // Keep track of velocity for flinging on release
+      this.rotationVelocity = -deltaX * dragSensitivity;
+    }
     
     this.previousPointerX = e.clientX;
+    this.previousPointerY = e.clientY;
   }
 
   onPointerUp(e) {
@@ -1395,6 +1429,40 @@ class App {
     
     // Increment or decrement scroll target index
     this.targetRotation = Math.round(this.targetRotation) + direction;
+  }
+
+  // Navigate through Grid or Carousel layout via arrow keys
+  navigateGridOrCarousel(dx, dy) {
+    if (this.isZoomed) this.deselectFocusedAlbum();
+
+    if (this.activeView === 'grid') {
+      const COLS = 4;
+      const idx = this.focusedIndex;
+      let newIdx = idx;
+      
+      if (dx !== 0) {
+        newIdx = idx + dx;
+      } else if (dy !== 0) {
+        newIdx = idx + dy * COLS;
+      }
+      
+      // Clamp index within total album bounds
+      newIdx = Math.max(0, Math.min(NUM_ALBUMS - 1, newIdx));
+      
+      if (newIdx !== this.focusedIndex) {
+        this.focusAlbumIndex(newIdx);
+        
+        // Auto-center the grid scroll position on the newly focused row
+        const row = Math.floor(newIdx / COLS);
+        const ROWS = Math.ceil(NUM_ALBUMS / COLS);
+        this.targetGridScrollY = (row - (ROWS - 1) / 2) * 2.2;
+      }
+    } else {
+      // In Carousel View: Left/Right arrow rotates carousel, Up/Down does nothing
+      if (dx !== 0) {
+        this.rotateCarousel(dx);
+      }
+    }
   }
 
   focusAlbumIndex(index, warp = false) {
@@ -1648,6 +1716,9 @@ class App {
     const targetZoom = this.isZoomed ? 1.0 : 0.0;
     this.zoomProgress += (targetZoom - this.zoomProgress) * 0.1;
 
+    // Smoothly interpolate vertical grid scroll position
+    this.gridScrollY += (this.targetGridScrollY - this.gridScrollY) * 0.15;
+
     // 5. Update individual Album positions, rotations, sleeves, and vinyl offsets
     this.albumGroups.forEach((item) => {
       // Offset distance from scroll index wrapping infinitely
@@ -1718,7 +1789,7 @@ class App {
       const floatRotY = Math.cos(flowTime * 0.3 + item.index) * 0.03;
       
       const gridX = (col - (COLS - 1) / 2) * 2.0 + floatX; // slightly increased spacing
-      const gridY = -(row - (ROWS - 1) / 2) * 2.2 + floatY; // slightly increased spacing
+      const gridY = -(row - (ROWS - 1) / 2) * 2.2 + floatY + this.gridScrollY; // slightly increased spacing with vertical scroll offset
       const gridZ = (isFocusedItem ? -0.8 : -1.5) + floatZ;
       const gridRotX = floatRotX;
       const gridRotY = floatRotY;
