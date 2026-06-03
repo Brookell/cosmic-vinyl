@@ -152,8 +152,8 @@ class App {
 
   // Update background clear color and fog color based on brightness setting
   updateBackgroundAndFog() {
-    // Base color 0x04020d multiplied by brightness multiplier
-    const baseColor = new THREE.Color(0x04020d);
+    // Base color 0x010101 (neutral dark space black) multiplied by brightness multiplier
+    const baseColor = new THREE.Color(0x010101);
     baseColor.multiplyScalar(this.bgBrightnessSetting);
 
     if (this.renderer) {
@@ -235,16 +235,16 @@ class App {
       this.starPositions[i * 3 + 1] = y;
       this.starPositions[i * 3 + 2] = z;
 
-      // Color mapping: Cyan, Purple, White mixes
+      // Color mapping: realistic starry sky colors (mostly warm white, soft blue-white, and pure white)
       const randColor = Math.random();
-      if (randColor < 0.35) {
-        // Cyan
-        colors[i * 3] = 0.0; colors[i * 3 + 1] = 0.94; colors[i * 3 + 2] = 1.0;
-      } else if (randColor < 0.7) {
-        // Soft Purple
-        colors[i * 3] = 0.74; colors[i * 3 + 1] = 0.0; colors[i * 3 + 2] = 1.0;
+      if (randColor < 0.15) {
+        // Pale blue-white star
+        colors[i * 3] = 0.85; colors[i * 3 + 1] = 0.95; colors[i * 3 + 2] = 1.0;
+      } else if (randColor < 0.3) {
+        // Pale warm/yellow-white star
+        colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.98; colors[i * 3 + 2] = 0.85;
       } else {
-        // Starry White
+        // Pure starry white
         colors[i * 3] = 0.95; colors[i * 3 + 1] = 0.95; colors[i * 3 + 2] = 1.0;
       }
 
@@ -258,7 +258,7 @@ class App {
     const starTexture = this.generateStarTexture();
 
     const material = new THREE.PointsMaterial({
-      size: 0.15,
+      size: 0.08, // smaller stars for realistic sky
       map: starTexture,
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -1901,8 +1901,8 @@ class App {
       const bassIntensity = audioData.bass;
       const highIntensity = audioData.high;
 
-      // Twinkle size/opacity animations
-      this.starfield.material.size = 0.12 + highIntensity * 0.08;
+      // Twinkle size/opacity animations (smaller particles for realistic starfield)
+      this.starfield.material.size = 0.06 + highIntensity * 0.04;
       this.starfield.material.opacity = 0.65 + Math.sin(time * 5.0) * 0.1 * (1.0 + highIntensity);
 
       for (let i = 0; i < this.starsCount; i++) {
