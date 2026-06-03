@@ -70,7 +70,7 @@ class GestureController {
     if (this.isCameraActive) return;
 
     try {
-      document.getElementById('mp-status').innerHTML = `<span class="dot yellow"></span><span class="status-text">REQUESTING CAMERA...</span>`;
+      document.getElementById('mp-status').innerHTML = `<span class="dot yellow"></span><span class="status-text">Requesting camera...</span>`;
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }
@@ -93,14 +93,14 @@ class GestureController {
         });
         this.camera.start();
         
-        document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">CAMERA ACTIVE</span>`;
+        document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">Camera active</span>`;
       } else {
         // Fallback if Camera class is not loaded
         this.startRequestAnimationFrameLoop();
       }
     } catch (error) {
       console.error("Camera access denied or failed:", error);
-      document.getElementById('mp-status').innerHTML = `<span class="dot red"></span><span class="status-text">OFFLINE / MOUSE MODE</span>`;
+      document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
       document.getElementById('cam-warning').classList.remove('hidden');
       document.getElementById('cam-warning').querySelector('span').textContent = "Camera Blocked";
       this.isCameraActive = false;
@@ -120,7 +120,7 @@ class GestureController {
       tracks.forEach(track => track.stop());
       this.video.srcObject = null;
     }
-    document.getElementById('mp-status').innerHTML = `<span class="dot red"></span><span class="status-text">OFFLINE / MOUSE MODE</span>`;
+    document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
     document.getElementById('cam-warning').classList.remove('hidden');
     document.getElementById('cam-warning').querySelector('span').textContent = "Camera Off";
     
@@ -142,7 +142,7 @@ class GestureController {
       requestAnimationFrame(process);
     };
     requestAnimationFrame(process);
-    document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">CAMERA ACTIVE</span>`;
+    document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">Camera active</span>`;
   }
 
   // Process MediaPipe results

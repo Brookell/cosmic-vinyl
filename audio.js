@@ -273,7 +273,7 @@ class AudioEngine {
     if (iconPlay) iconPlay.classList.add('hidden');
     if (iconPause) iconPause.classList.remove('hidden');
     if (audioStatus) {
-      audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">AUDIO ACTIVE</span>`;
+      audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">Playing</span>`;
     }
   }
 
@@ -297,7 +297,7 @@ class AudioEngine {
     if (iconPlay) iconPlay.classList.remove('hidden');
     if (iconPause) iconPause.classList.add('hidden');
     if (audioStatus) {
-      audioStatus.innerHTML = `<span class="dot red"></span><span class="status-text">AUDIO PAUSED</span>`;
+      audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">Paused</span>`;
     }
   }
 

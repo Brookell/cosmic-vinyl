@@ -1329,7 +1329,7 @@ class App {
         console.warn("Webcam activation was bypassed:", err);
       });
     } else {
-      document.getElementById('mp-status').innerHTML = `<span class="dot red"></span><span class="status-text">OFFLINE / MOUSE MODE</span>`;
+      document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
     }
     
     // Load real iTunes preview URLs and artwork for default tracks
