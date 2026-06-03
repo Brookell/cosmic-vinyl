@@ -1839,18 +1839,10 @@ class App {
       }
     }
 
-    // Toggle Spotify detail banner visibility based on zoom progress (hide if active playing to clean view)
+    // Keep Spotify detail banner hidden (removed as per user request to clean up selection view)
     const banner = document.getElementById('track-detail-banner');
     if (banner) {
-      if (this.isZoomed && this.zoomProgress > 0.15 && !audio.isPlaying) {
-        banner.classList.remove('hidden');
-        banner.style.opacity = Math.min(1.0, (this.zoomProgress - 0.15) * 1.18); // smooth fade in
-      } else {
-        banner.style.opacity = Math.max(0.0, this.zoomProgress / 0.15); // smooth fade out
-        if (this.zoomProgress < 0.05 || audio.isPlaying) {
-          banner.classList.add('hidden');
-        }
-      }
+      banner.classList.add('hidden');
     }
 
     // Update mouse trail
