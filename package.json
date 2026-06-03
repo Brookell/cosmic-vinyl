@@ -1,0 +1,18 @@
+{
+  "name": "cosmic-vinyl",
+  "version": "1.0.0",
+  "description": "Cosmic Vinyl - Gesture-Controlled 3D Audio Gallery",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server -p 3005 -c-1"
+  },
+  "keywords": [
+    "threejs",
+    "mediapipe",
+    "gesture-control",
+    "web-audio-api"
+  ],
+  "author": "Antigravity Pair",
+  "license": "MIT"
+}

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Vinyl - 3D Gesture Audio Gallery</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css?v=2">
+
+  <!-- MediaPipe Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+  <!-- Three.js Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 3D Canvas Viewport -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- HUD Interface Wrapper -->
+  <div id="hud" class="sidebar-collapsed">
+    
+    <!-- Top Header Bar (Spotify Style) -->
+    <header class="hud-header glass">
+      <div class="logo">
+        <h1>COSMIC VINYL</h1>
+        <button id="btn-toggle-library" class="library-toggle-btn" title="Toggle Sidebar">
+          <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+            <path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
+          </svg>
+          <span>Library</span>
+        </button>
+        <button id="btn-toggle-view" class="view-toggle-btn" title="Switch View">
+          <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+            <path fill="currentColor" d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
+          </svg>
+          <span id="view-toggle-text">Grid View</span>
+        </button>
+      </div>
+      
+      <!-- Song Search Box -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input type="text" id="search-input" placeholder="What do you want to play?" autocomplete="off">
+        </div>
+        <div id="search-results" class="search-results-dropdown glass hidden"></div>
+      </div>
+
+      <div class="system-status">
+        <div class="status-indicator" id="mp-status">
+          <span class="dot yellow"></span>
+          <span class="status-text">INITIALIZING GESTURES...</span>
+        </div>
+        <div class="status-indicator" id="audio-status">
+          <span class="dot red"></span>
+          <span class="status-text">AUDIO READY</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Spotify-style Left Sidebar (Your Library) -->
+    <aside id="spotify-sidebar" class="spotify-sidebar glass">
+      <div class="sidebar-header">
+        <div class="library-title-row">
+          <div class="library-title">
+            <svg viewBox="0 0 24 24" width="18" height="18" class="lib-icon">
+              <path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
+            </svg>
+            <span>Your Library</span>
+          </div>
+          <div class="library-actions">
+            <!-- Add song button -->
+            <button id="btn-add-song" class="sidebar-action-btn" title="Add Custom Song">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+            </button>
+            <!-- Collapse button -->
+            <button id="btn-close-library" class="sidebar-action-btn" title="Collapse Library">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Spotify-style chips/filters -->
+        <div class="filter-chips">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="custom">Custom</button>
+          <button class="chip" data-filter="online">Online</button>
+          <button class="chip" data-filter="gestures">Gestures</button>
+        </div>
+      </div>
+
+      <!-- Add Song Search & Custom Form Panel inside Sidebar -->
+      <div id="add-song-container" class="add-song-panel hidden">
+        <div class="panel-mode-selector">
+          <button id="btn-mode-search" class="mode-btn active" type="button">Search Online</button>
+          <button id="btn-mode-manual" class="mode-btn" type="button">Custom Manual</button>
+        </div>
+        
+        <!-- Mode 1: Search Online -->
+        <div id="mode-search-container" class="mode-container">
+          <div class="search-input-wrapper" style="margin-bottom: 0;">
+            <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14">
+              <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input type="text" id="sidebar-song-search" placeholder="Search songs..." autocomplete="off">
+          </div>
+          <div id="sidebar-search-results" class="sidebar-search-results-list"></div>
+        </div>
+
+        <!-- Mode 2: Custom Manual Form -->
+        <div id="mode-manual-container" class="mode-container hidden">
+          <form id="add-song-form" onsubmit="event.preventDefault();">
+            <div class="form-group" style="margin-bottom: 6px;">
+              <input type="text" id="custom-song-title" placeholder="Song Title" required autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <input type="text" id="custom-song-artist" placeholder="Artist Name" required autocomplete="off">
+            </div>
+            <button type="submit" class="form-submit-btn" style="width: 100%;">Add to Gallery</button>
+          </form>
+        </div>
+
+        <div class="panel-footer-actions" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; display: flex; justify-content: flex-end;">
+          <button type="button" id="btn-cancel-add" class="form-cancel-btn" style="padding: 4px 10px; font-size: 10px;">Close Panel</button>
+        </div>
+      </div>
+
+      <!-- Scrollable Tracks & Guide list -->
+      <div class="sidebar-scroll-content">
+        <!-- Rendered list of songs -->
+        <div id="library-song-list" class="library-song-list">
+          <!-- Rendered dynamically in main.js -->
+        </div>
+
+        <!-- Gesture Guide cards (Shown only when 'Gestures' tab is active) -->
+        <div id="gesture-guide-section" class="gesture-guide-section hidden">
+          <div class="gesture-cards">
+            <div class="gesture-card" id="card-open">
+              <div class="gesture-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="currentColor" d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zm-1-15h2v6h-2V7zm0 8h2v2h-2v-2z"/>
+                </svg>
+              </div>
+              <div class="gesture-info">
+                <h3>OPEN PALM (五指张开)</h3>
+                <p>Fast slide left/right to view albums</p>
+              </div>
+            </div>
+
+            <div class="gesture-card" id="card-digit1">
+              <div class="gesture-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="currentColor" d="M14 2H8v2h2v14H8v2h8v-2h-2V2z"/>
+                </svg>
+              </div>
+              <div class="gesture-info">
+                <h3>DIGIT ONE (比数字一)</h3>
+                <p>Slow slide left/right to view albums</p>
+              </div>
+            </div>
+
+            <div class="gesture-card" id="card-fist">
+              <div class="gesture-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm1 13.5h-2v-2h2v2zm0-3.5h-2V7h2v5z"/>
+                </svg>
+              </div>
+              <div class="gesture-info">
+                <h3>MAKE A FIST (握拳)</h3>
+                <p>Zoom current album (Hold still 3s to play)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Spotify-style Track Detail Banner (Top Right, displays when zoomed) -->
+    <div id="track-detail-banner" class="spotify-banner glass hidden">
+      <div class="banner-content">
+        <div class="banner-art" id="banner-art-preview"></div>
+        <div class="banner-text">
+          <span class="banner-subtitle">ALBUM</span>
+          <h2 class="banner-title" id="banner-title-text">Reckoner</h2>
+          <div class="banner-metadata">
+            <span class="banner-artist" id="banner-artist-text">Radiohead</span>
+            <span class="bullet">•</span>
+            <span class="banner-duration" id="banner-duration-text">0:45</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="banner-actions">
+        <button id="btn-banner-play" class="btn-spotify-green" title="Toggle Play">
+          <!-- Play state icon -->
+          <svg class="icon-play-svg" viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+          <!-- Pause state icon -->
+          <svg class="icon-pause-svg hidden" viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="banner-icon-btn" title="Shuffle">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 18 7.41V10h2V4h-5.5zm1.91 10.09l-1.41 1.41 3.1 3.1H16v2h5v-5h-2v2.58l-2.59-2.59z"/></svg>
+        </button>
+        <button class="banner-icon-btn active" title="Save to Library">
+          <svg class="spotify-green-text" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </button>
+        <button class="banner-icon-btn" title="More options">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Controls Panel (Spotify Player Style) -->
+    <footer class="hud-player glass">
+      <!-- Music Info -->
+      <div class="player-info">
+        <div class="current-album-art" id="player-art-preview"></div>
+        <div class="track-details">
+          <div class="track-title" id="track-name">Reckoner</div>
+          <div class="track-artist" id="track-artist">Radiohead</div>
+        </div>
+        <!-- Spotify Green Checked badge -->
+        <span class="checked-badge-container" title="Saved to Library">
+          <svg class="spotify-green-text checked-badge" viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </span>
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="player-controls">
+        <div class="control-buttons">
+          <button class="control-btn-secondary" title="Shuffle">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 18 7.41V10h2V4h-5.5zm1.91 10.09l-1.41 1.41 3.1 3.1H16v2h5v-5h-2v2.58l-2.59-2.59z"/></svg>
+          </button>
+          <button id="btn-prev" class="control-btn" title="Previous (Swipe Left)">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          <button id="btn-play" class="control-btn play-pause-btn play-btn-white-circle" title="Toggle Play (Open Hand/Fist)">
+            <!-- Play state icon -->
+            <svg id="icon-play" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            <!-- Pause state icon (hidden by default) -->
+            <svg id="icon-pause" viewBox="0 0 24 24" width="20" height="20" class="hidden"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button id="btn-next" class="control-btn" title="Next (Swipe Right)">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 18l8.5-6L6 6zm9-12v12h2V6z"/></svg>
+          </button>
+          <button class="control-btn-secondary" title="Repeat">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+          </button>
+        </div>
+        <div class="progress-bar-container">
+          <span class="time-label" id="current-time">0:00</span>
+          <div class="progress-bar-bg" id="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+          <span class="time-label" id="duration-time">--:--</span>
+        </div>
+      </div>
+
+      <!-- Audio Sources and File Inputs -->
+      <div class="player-actions">
+        <div class="source-selector">
+          <label for="audio-upload" class="action-btn upload-btn">
+            <span>Upload MP3</span>
+            <input type="file" id="audio-upload" accept="audio/*">
+          </label>
+        </div>
+        <!-- Volume -->
+        <div class="volume-control">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.7">
+        </div>
+      </div>
+    </footer>
+    
+    <!-- Settings Panel (Visual Customizer) -->
+    <div id="settings-panel" class="glass collapsed">
+      <button id="btn-toggle-settings" class="settings-toggle-btn" title="Toggle Settings">
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+        </svg>
+      </button>
+      <div class="settings-content">
+        <h3>VISUAL SETTINGS</h3>
+        <div class="settings-group">
+          <label for="setting-stars">Particles Count: <span id="stars-val">4000</span></label>
+          <input type="range" id="setting-stars" min="1000" max="10000" step="500" value="4000">
+        </div>
+        <div class="settings-group">
+          <label for="setting-brightness">BG Brightness: <span id="brightness-val">20%</span></label>
+          <input type="range" id="setting-brightness" min="0" max="100" step="5" value="20">
+        </div>
+        <div class="settings-group">
+          <label for="setting-speed">Particle Speed: <span id="speed-val">1.0x</span></label>
+          <input type="range" id="setting-speed" min="10" max="300" step="10" value="100">
+        </div>
+      </div>
+    </div>
+
+    <!-- Webcam Mini-Monitor Overlay -->
+    <div id="webcam-monitor" class="glass">
+      <div class="monitor-header">
+        <span class="title">GESTURE PREVIEW</span>
+        <button id="btn-toggle-cam" class="monitor-btn" title="Toggle Webcam Overlay">
+          <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        </button>
+      </div>
+      <div class="monitor-body">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="gesture-overlay"></canvas>
+        <div class="no-cam-warning" id="cam-warning">
+          <span>Camera Off</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onboarding Splash Overlay (Minimal Style) -->
+  <div id="onboarding" class="overlay">
+    <div class="onboarding-card glass" style="max-width: 420px; gap: 20px; padding: 32px;">
+      <h2 style="font-size: 32px; font-weight: 800; letter-spacing: 0.5px; margin: 0;">COSMIC VINYL</h2>
+      <h3 style="font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 10px 0;">3D AUDIO GALLERY</h3>
+      
+      <button id="btn-start" class="start-btn" style="width: 100%; margin: 0;">ENABLE CAMERA & ENTER</button>
+      <button id="btn-start-no-cam" class="start-btn secondary" style="width: 100%; margin: 0;">ENTER WITH MOUSE/KEYS</button>
+    </div>
+  </div>
+
+  <!-- Fist Loading Progress Overlay -->
+  <div id="fist-loader" class="fist-loader-container">
+    <svg class="progress-ring" width="100" height="100">
+      <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="42" cx="50" cy="50"/>
+      <circle class="progress-ring__circle" stroke="var(--accent-cyan)" stroke-width="6" fill="transparent" r="42" cx="50" cy="50"/>
+    </svg>
+    <div class="loader-label">HOLD STILL TO PLAY</div>
+  </div>
+
+  <!-- Core Javascript imports -->
+  <script type="module" src="audio.js"></script>
+  <script type="module" src="gestures.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
