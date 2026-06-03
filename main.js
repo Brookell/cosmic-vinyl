@@ -51,6 +51,19 @@ class App {
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     
+    // Mouse Trail / Dynamic Follow Light State
+    this.MAX_TRAIL_PARTICLES = 200;
+    this.trailParticles = [];
+    this.trailGeometry = null;
+    this.trailMaterial = null;
+    this.trailPoints = null;
+    this.mouse3D = null;
+    this.targetMouse3D = null;
+    this.lastMouseMoveTime = 0;
+    this.mouseLight = null;
+    this.mousePlane = null;
+    this.trailSpawnIndex = 0;
+    
     // Gesture Slide State
     this.isGestureSliding = false;
     this.gestureSlideTimer = null;
@@ -125,6 +138,7 @@ class App {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.updateBackgroundAndFog();
+    this.createMouseTrail();
   }
 
   // Update background clear color and fog color based on brightness setting
@@ -233,6 +247,190 @@ class App {
 
     this.starfield = new THREE.Points(geometry, material);
     this.scene.add(this.starfield);
+  }
+
+  // Create dynamic light follow and stardust particle trail for mouse movement
+  createMouseTrail() {
+    this.MAX_TRAIL_PARTICLES = 200;
+    this.trailParticles = [];
+    for (let i = 0; i < this.MAX_TRAIL_PARTICLES; i++) {
+      this.trailParticles.push({
+        position: new THREE.Vector3(0, 0, 0),
+        velocity: new THREE.Vector3(0, 0, 0),
+        color: new THREE.Color(),
+        size: 0,
+        life: 0,
+        maxLife: 0
+      });
+    }
+
+    this.trailGeometry = new THREE.BufferGeometry();
+    this.trailPositions = new Float32Array(this.MAX_TRAIL_PARTICLES * 3);
+    this.trailColors = new Float32Array(this.MAX_TRAIL_PARTICLES * 3);
+    this.trailSizes = new Float32Array(this.MAX_TRAIL_PARTICLES);
+
+    this.trailGeometry.setAttribute('position', new THREE.BufferAttribute(this.trailPositions, 3));
+    this.trailGeometry.setAttribute('color', new THREE.BufferAttribute(this.trailColors, 3));
+    this.trailGeometry.setAttribute('size', new THREE.BufferAttribute(this.trailSizes, 1));
+
+    const starTexture = this.generateStarTexture();
+
+    this.trailMaterial = new THREE.PointsMaterial({
+      size: 0.35, // base size of stardust particles
+      map: starTexture,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      vertexColors: true,
+      opacity: 0.95
+    });
+
+    this.trailPoints = new THREE.Points(this.trailGeometry, this.trailMaterial);
+    this.scene.add(this.trailPoints);
+
+    // Initial mouse positions
+    this.mouse3D = new THREE.Vector3(0, 0, 0.5);
+    this.targetMouse3D = new THREE.Vector3(0, 0, 0.5);
+    this.lastMouseMoveTime = 0;
+
+    // Dynamically illuminated point light following the mouse
+    this.mouseLight = new THREE.PointLight(0x00f0ff, 0, 10, 1.5);
+    this.scene.add(this.mouseLight);
+
+    this.trailSpawnIndex = 0;
+  }
+
+  updateMousePosition(e) {
+    this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    
+    if (!this.mousePlane) {
+      this.mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.5); // Plane facing camera at z = 0.5
+    }
+    
+    if (this.camera) {
+      this.raycaster.setFromCamera(this.pointer, this.camera);
+      this.raycaster.ray.intersectPlane(this.mousePlane, this.targetMouse3D);
+      this.lastMouseMoveTime = Date.now();
+    }
+  }
+
+  updateMouseTrail(time) {
+    if (!this.trailGeometry || !this.mouseLight) return;
+
+    const positions = this.trailGeometry.attributes.position.array;
+    const colors = this.trailGeometry.attributes.color.array;
+
+    const idleTime = Date.now() - this.lastMouseMoveTime;
+    
+    // Smooth lag behind mouse movements for fluid flow feel
+    this.mouse3D.lerp(this.targetMouse3D, 0.12);
+
+    // Fade and animate mouse light color
+    if (idleTime < 2000) {
+      // Gentle color cycle matching vibrant spectrum
+      const hue = (time * 0.08) % 1.0;
+      this.mouseLight.color.setHSL(hue, 0.9, 0.55);
+      
+      // Reactive intensity: brighter when moving fast
+      const dist = this.mouse3D.distanceTo(this.targetMouse3D);
+      const targetIntensity = 4.0 + dist * 5.0;
+      this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, targetIntensity, 0.1);
+    } else {
+      this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, 0, 0.03);
+    }
+    this.mouseLight.position.copy(this.mouse3D);
+
+    // Spawn new stardust flow particles
+    if (idleTime < 2000) {
+      const dist = this.mouse3D.distanceTo(this.targetMouse3D);
+      const spawnCount = Math.min(8, Math.max(2, Math.floor(dist * 35) + 2));
+      
+      for (let s = 0; s < spawnCount; s++) {
+        const p = this.trailParticles[this.trailSpawnIndex];
+        
+        // Spawn slightly clustered around mouse cursor
+        p.position.copy(this.mouse3D);
+        p.position.x += (Math.random() - 0.5) * 0.18;
+        p.position.y += (Math.random() - 0.5) * 0.18;
+        p.position.z += (Math.random() - 0.5) * 0.18;
+        
+        // Initial random velocity
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.005 + Math.random() * 0.025;
+        p.velocity.set(
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed + 0.003, // subtle float up
+          (Math.random() - 0.5) * 0.015
+        );
+        
+        // Random cycling dynamic colors for follow trail
+        const rand = Math.random();
+        if (rand < 0.4) {
+          p.color.setRGB(0.0, 0.94, 1.0); // Cyan stardust
+        } else if (rand < 0.75) {
+          p.color.setRGB(0.9, 0.1, 1.0); // Violet stardust
+        } else {
+          p.color.setRGB(1.0, 0.3, 0.6); // Rose stardust
+        }
+        
+        p.life = 1.0;
+        p.maxLife = 50 + Math.floor(Math.random() * 40); // frames of life
+        
+        this.trailSpawnIndex = (this.trailSpawnIndex + 1) % this.MAX_TRAIL_PARTICLES;
+      }
+    }
+
+    // Update active stardust flow mechanics
+    for (let i = 0; i < this.MAX_TRAIL_PARTICLES; i++) {
+      const p = this.trailParticles[i];
+      
+      if (p.life > 0) {
+        p.life -= 1.0 / p.maxLife;
+        
+        // Light Gathering (光线聚集) - gravity pull towards cursor position
+        const toMouse = new THREE.Vector3().subVectors(this.mouse3D, p.position);
+        const dist = toMouse.length();
+        if (dist > 0.05) {
+          toMouse.normalize();
+          
+          // Force drawing them in
+          p.velocity.addScaledVector(toMouse, 0.0008);
+          
+          // Flow vortex swirling follow effect (cross product)
+          const vortex = new THREE.Vector3(-toMouse.y, toMouse.x, 0);
+          p.velocity.addScaledVector(vortex, 0.0006);
+        }
+        
+        // Kinetic drag
+        p.velocity.multiplyScalar(0.94);
+        
+        // Apply position delta
+        p.position.add(p.velocity);
+        
+        // Update buffers
+        positions[i * 3] = p.position.x;
+        positions[i * 3 + 1] = p.position.y;
+        positions[i * 3 + 2] = p.position.z;
+        
+        // Fade out stardust towards black (additive blend opacity)
+        const fade = p.life * p.life; // squared fade for smoother dropoff
+        colors[i * 3] = p.color.r * fade;
+        colors[i * 3 + 1] = p.color.g * fade;
+        colors[i * 3 + 2] = p.color.b * fade;
+      } else {
+        // Offscreen and black
+        positions[i * 3] = 9999;
+        positions[i * 3 + 1] = 9999;
+        positions[i * 3 + 2] = 9999;
+        colors[i * 3] = 0;
+        colors[i * 3 + 1] = 0;
+        colors[i * 3 + 2] = 0;
+      }
+    }
+
+    this.trailGeometry.attributes.position.needsUpdate = true;
+    this.trailGeometry.attributes.color.needsUpdate = true;
   }
 
   // Create radial alpha texture for soft circular stars
@@ -679,6 +877,9 @@ class App {
   // Event bindings
   bindEvents() {
     window.addEventListener('resize', () => this.onWindowResize());
+    
+    // Global pointer move for mouse trail follow
+    window.addEventListener('pointermove', (e) => this.updateMousePosition(e));
     
     // 3D Raycast click listeners (mouse pinch fallback)
     this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
@@ -1600,6 +1801,9 @@ class App {
         }
       }
     }
+
+    // Update mouse trail
+    this.updateMouseTrail(time);
 
     // 8. Render Frame
     this.renderer.render(this.scene, this.camera);
