@@ -983,6 +983,7 @@ body {
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
   height: calc(100% - 10px); /* Leave room for footer spacing */
+  min-height: 0; /* Prevent the grid item from expanding beyond grid cell */
 }
 
 #hud.sidebar-collapsed .spotify-sidebar {
@@ -1166,6 +1167,7 @@ body {
 /* Sidebar Scroll Area */
 .sidebar-scroll-content {
   flex-grow: 1;
+  min-height: 0; /* Allow flex child to shrink below content height and scroll */
   overflow-y: auto;
   margin-top: 12px;
   padding-right: 2px;
