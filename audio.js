@@ -73,7 +73,7 @@ class AudioEngine {
     this.synthLfo = null;
     
     // Track List (Virtual Carousel tracks) - Loaded from localStorage or defaults
-    const savedTracks = localStorage.getItem('cosmic_vinyl_tracks');
+    const savedTracks = localStorage.getItem('cosmic_vinyl_tracks_v2');
     if (savedTracks) {
       try {
         this.tracks = JSON.parse(savedTracks);
@@ -84,13 +84,37 @@ class AudioEngine {
 
     if (!this.tracks || this.tracks.length === 0) {
       this.tracks = [
-        { id: "reckoner", name: "Reckoner", artist: "Radiohead", album: "In Rainbows", duration: "0:45", iTunesQuery: "Reckoner Radiohead In Rainbows", previewUrl: null, artworkUrl: null },
-        { id: "thinkin_bout_you", name: "Thinkin Bout You", artist: "Frank Ocean", album: "channel ORANGE", duration: "0:45", iTunesQuery: "Thinkin Bout You Frank Ocean", previewUrl: null, artworkUrl: null },
-        { id: "runaway", name: "Runaway", artist: "Kanye West", album: "My Beautiful Dark Twisted Fantasy", duration: "0:45", iTunesQuery: "Runaway Kanye West", previewUrl: null, artworkUrl: null },
-        { id: "swimming_pools", name: "Swimming Pools (Drank)", artist: "Kendrick Lamar", album: "good kid, m.A.A.d city", duration: "0:45", iTunesQuery: "Swimming Pools Kendrick Lamar", previewUrl: null, artworkUrl: null },
-        { id: "get_lucky", name: "Get Lucky", artist: "Daft Punk", album: "Random Access Memories", duration: "0:45", iTunesQuery: "Get Lucky Daft Punk", previewUrl: null, artworkUrl: null },
-        { id: "nikes", name: "Nikes", artist: "Frank Ocean", album: "Blonde", duration: "0:45", iTunesQuery: "Nikes Frank Ocean", previewUrl: null, artworkUrl: null },
-        { id: "green_light", name: "Green Light", artist: "Lorde", album: "Melodrama", duration: "0:45", iTunesQuery: "Green Light Lorde", previewUrl: null, artworkUrl: null }
+        { id: "green_light", name: "Green Light", artist: "Lorde", album: "Melodrama", duration: "0:45", iTunesQuery: "Green Light Lorde", previewUrl: null, artworkUrl: null },
+        { id: "too_smart", name: "Too Smart", artist: "Cheer Chen", album: "Groupies", duration: "0:45", iTunesQuery: "Too Smart Cheer Chen", previewUrl: null, artworkUrl: null },
+        { id: "golden", name: "Golden", artist: "Enno Cheng", album: "Neptune", duration: "0:45", iTunesQuery: "Golden Enno Cheng", previewUrl: null, artworkUrl: null },
+        { id: "time", name: "Time", artist: "Pink Floyd", album: "The Dark Side of the Moon", duration: "0:45", iTunesQuery: "Time Pink Floyd", previewUrl: null, artworkUrl: null },
+        { id: "lemon_brandy", name: "Lemon Brandy", artist: "Railway Suicide Train", album: "Lemon Brandy", duration: "0:45", iTunesQuery: "Lemon Brandy Railway Suicide Train", previewUrl: null, artworkUrl: null },
+        { id: "color_blind", name: "色盲 (feat. 徐佳莹)", artist: "Jude Chiu", album: "Color Blind", duration: "0:45", iTunesQuery: "色盲 Jude Chiu 徐佳莹", previewUrl: null, artworkUrl: null },
+        { id: "missing_you", name: "Missing You", artist: "Naoko Gushima", album: "mellow medicine", duration: "0:45", iTunesQuery: "Missing You Naoko Gushima", previewUrl: null, artworkUrl: null },
+        { id: "rainy_season", name: "Rainy Season", artist: "A-Yue Chang", album: "Useless Guy", duration: "0:45", iTunesQuery: "Rainy Season A-Yue Chang", previewUrl: null, artworkUrl: null },
+        { id: "yushi", name: "于是", artist: "Ciacia Ho", album: "于是", duration: "0:45", iTunesQuery: "于是 Ciacia Ho", previewUrl: null, artworkUrl: null },
+        { id: "ophelia", name: "Ophelia", artist: "Waa Wei", album: "Ophelia", duration: "0:45", iTunesQuery: "Ophelia Waa Wei", previewUrl: null, artworkUrl: null },
+        { id: "dont_melt", name: "Don't Melt Into the Air", artist: "Zitan Qi", album: "Don't Melt Into the Air", duration: "0:45", iTunesQuery: "Don't Melt Into the Air Zitan Qi", previewUrl: null, artworkUrl: null },
+        { id: "left_side_heart", name: "心脏的左边 (feat. moon tang)", artist: "The Crane", album: "心脏的左边", duration: "0:45", iTunesQuery: "心脏的左边 The Crane moon tang", previewUrl: null, artworkUrl: null },
+        { id: "courage", name: "Courage", artist: "A-Yue Chang", album: "Courage", duration: "0:45", iTunesQuery: "Courage A-Yue Chang", previewUrl: null, artworkUrl: null },
+        { id: "what_is_love", name: "What is Love?", artist: "TWICE", album: "What is Love?", duration: "0:45", iTunesQuery: "What is Love TWICE", previewUrl: null, artworkUrl: null },
+        { id: "sleepless_night", name: "Sleepless Night", artist: "Crowd Lu", album: "Sleepless Night", duration: "0:45", iTunesQuery: "Sleepless Night Crowd Lu", previewUrl: null, artworkUrl: null },
+        { id: "silver_lining", name: "Silver Lining", artist: "Pei-Yu Hung", album: "Silver Lining", duration: "0:45", iTunesQuery: "Silver Lining Pei-Yu Hung", previewUrl: null, artworkUrl: null },
+        { id: "yesterday", name: "我又再度依恋上昨天", artist: "Tizzy Bac", album: "我又再度依恋上昨天", duration: "0:45", iTunesQuery: "我又再度依恋上昨天 Tizzy Bac", previewUrl: null, artworkUrl: null },
+        { id: "the_moment", name: "The Moment", artist: "Yanzi Sun", album: "The Moment", duration: "0:45", iTunesQuery: "The Moment Yanzi Sun", previewUrl: null, artworkUrl: null },
+        { id: "human_cannonball", name: "空中飞人", artist: "Leah Dou", album: "空中飞人", duration: "0:45", iTunesQuery: "空中飞人 Leah Dou", previewUrl: null, artworkUrl: null },
+        { id: "god_bless_me", name: "God Bless Me", artist: "Dou Wei", album: "God Bless Me", duration: "0:45", iTunesQuery: "God Bless Me Dou Wei", previewUrl: null, artworkUrl: null },
+        { id: "terminal", name: "你在终点等我", artist: "Faye Wong", album: "你在终点等我", duration: "0:45", iTunesQuery: "你在终点等我 Faye Wong", previewUrl: null, artworkUrl: null },
+        { id: "expiration_date", name: "赏味期限", artist: "Ze Hwang", album: "赏味期限", duration: "0:45", iTunesQuery: "赏味期限 Ze Hwang", previewUrl: null, artworkUrl: null },
+        { id: "yurei", name: "Yurei", artist: "betcover!!", album: "Yurei", duration: "0:45", iTunesQuery: "Yurei betcover", previewUrl: null, artworkUrl: null },
+        { id: "mars", name: "昨夜我飞向遥远的火星", artist: "Soundtoy", album: "昨夜我飞向遥远的火星", duration: "0:45", iTunesQuery: "昨夜我飞向遥远的火星 Soundtoy", previewUrl: null, artworkUrl: null },
+        { id: "scary_house", name: "恐怖的房子", artist: "Supermarket", album: "恐怖的房子", duration: "0:45", iTunesQuery: "恐怖的房子 Supermarket", previewUrl: null, artworkUrl: null },
+        { id: "lonely_god", name: "Lonely God", artist: "Wang Wen", album: "Lonely God", duration: "0:45", iTunesQuery: "Lonely God Wang Wen", previewUrl: null, artworkUrl: null },
+        { id: "freckles", name: "雀斑", artist: "Ellen Loo", album: "雀斑", duration: "0:45", iTunesQuery: "雀斑 Ellen Loo", previewUrl: null, artworkUrl: null },
+        { id: "die_for_you", name: "Die For You", artist: "Joji", album: "SMITHEREENS", duration: "0:45", iTunesQuery: "Die For You Joji", previewUrl: null, artworkUrl: null },
+        { id: "rose_colored", name: "玫瑰色的你 (Rose-Colored)", artist: "Deserts Chang", album: "玫瑰色的你", duration: "0:45", iTunesQuery: "玫瑰色的你 Deserts Chang", previewUrl: null, artworkUrl: null },
+        { id: "blue_apple", name: "Blue Apple", artist: "AK Akemi Kakihara", album: "Blue Apple", duration: "0:45", iTunesQuery: "Blue Apple AK Akemi Kakihara", previewUrl: null, artworkUrl: null },
+        { id: "dont_mind", name: "Don't Mind", artist: "The Crane", album: "Don't Mind", duration: "0:45", iTunesQuery: "Don't Mind The Crane", previewUrl: null, artworkUrl: null }
       ];
       this.saveTracksToLocalStorage();
     }
@@ -102,23 +126,13 @@ class AudioEngine {
     this.chordsByTrack = [];
     const baseFreqs = [110.00, 116.54, 130.81, 146.83, 164.81];
     const defaultChords = [
-      [[146.83, 174.61, 220.00, 261.63], [116.54, 138.59, 174.61, 207.65]],
-      [[130.81, 164.81, 196.00, 246.94], [146.83, 185.00, 220.00, 277.18]],
-      [[110.00, 130.81, 164.81, 196.00], [130.81, 155.56, 196.00, 233.08]],
-      [[130.81, 155.56, 196.00, 233.08], [98.00, 116.54, 146.83, 174.61]],
-      [[146.83, 174.61, 220.00, 261.63], [164.81, 196.00, 246.94, 293.66]],
-      [[130.81, 164.81, 196.00, 246.94], [116.54, 138.59, 174.61, 207.65]],
-      [[110.00, 130.81, 164.81, 196.00], [87.31, 110.00, 130.81, 164.81]]
+      [[110.00, 130.81, 164.81, 196.00], [87.31, 110.00, 130.81, 164.81]] // Green Light chords
     ];
 
     for (let i = 0; i < this.tracks.length; i++) {
       const track = this.tracks[i];
-      if (track.id && ["reckoner", "thinkin_bout_you", "runaway", "swimming_pools", "get_lucky", "nikes", "green_light"].includes(track.id)) {
-        const origIndices = {
-          "reckoner": 0, "thinkin_bout_you": 1, "runaway": 2, "swimming_pools": 3,
-          "get_lucky": 4, "nikes": 5, "green_light": 6
-        };
-        this.chordsByTrack.push(defaultChords[origIndices[track.id]]);
+      if (track.id && track.id === "green_light") {
+        this.chordsByTrack.push(defaultChords[0]);
       } else {
         const base = baseFreqs[Math.floor(Math.random() * baseFreqs.length)];
         const isMinor = Math.random() > 0.35;
@@ -133,13 +147,13 @@ class AudioEngine {
       }
     }
     
-    this.chords = this.chordsByTrack[0] || defaultChords[0];
+    this.chords = this.chordsByTrack[0] || [[[110.00, 130.81, 164.81, 196.00], [87.31, 110.00, 130.81, 164.81]]];
     this.chordIndex = 0;
     this.stepIndex = 0;
   }
 
   saveTracksToLocalStorage() {
-    localStorage.setItem('cosmic_vinyl_tracks', JSON.stringify(this.tracks));
+    localStorage.setItem('cosmic_vinyl_tracks_v2', JSON.stringify(this.tracks));
   }
 
   // Initialize the Audio Context (must be user-triggered)
