@@ -81,6 +81,9 @@ class App {
     
     // Spotify UI State
     this.activeFilter = 'all';
+    
+    // Visual settings
+    this.sceneBrightness = 1.2;
   }
 
   // Start the application setup
@@ -161,6 +164,19 @@ class App {
     }
   }
 
+  // Update Three.js lights based on scene/artwork brightness setting
+  updateLightsIntensity() {
+    if (this.ambientLight) {
+      this.ambientLight.intensity = 0.15 * this.sceneBrightness;
+    }
+    if (this.dirLight) {
+      this.dirLight.intensity = 1.2 * this.sceneBrightness;
+    }
+    if (this.spotLight) {
+      this.spotLight.intensity = 4.0 * this.sceneBrightness;
+    }
+  }
+
   // Re-generate the starfield when particle count changes
   recreateStarfield() {
     if (this.starfield) {
@@ -173,23 +189,23 @@ class App {
 
   // Setup dynamic lighting for glassmorphic shading
   setupLights() {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
-    this.scene.add(ambientLight);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.15 * this.sceneBrightness);
+    this.scene.add(this.ambientLight);
 
     // Dynamic key light pointing down onto focused album area
-    const dirLight = new THREE.DirectionalLight(0x00f0ff, 1.2);
-    dirLight.position.set(5, 5, 5);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    this.scene.add(dirLight);
+    this.dirLight = new THREE.DirectionalLight(0x00f0ff, 1.2 * this.sceneBrightness);
+    this.dirLight.position.set(5, 5, 5);
+    this.dirLight.castShadow = true;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
+    this.scene.add(this.dirLight);
 
     // Direct cyan spot light highlight
-    const spotLight = new THREE.SpotLight(0xffffff, 4.0, 15, Math.PI / 4, 0.5, 1);
-    spotLight.position.set(0, 4, 6);
-    spotLight.target.position.set(0, 0, 0);
-    this.scene.add(spotLight);
-    this.scene.add(spotLight.target);
+    this.spotLight = new THREE.SpotLight(0xffffff, 4.0 * this.sceneBrightness, 15, Math.PI / 4, 0.5, 1);
+    this.spotLight.position.set(0, 4, 6);
+    this.spotLight.target.position.set(0, 0, 0);
+    this.scene.add(this.spotLight);
+    this.scene.add(this.spotLight.target);
   }
 
   // Procedural Glowing Starfield Generator
@@ -1029,6 +1045,18 @@ class App {
         valBrightness.textContent = val + '%';
         this.bgBrightnessSetting = val / 20.0;
         this.updateBackgroundAndFog();
+      });
+    }
+
+    const sliderSceneBrightness = document.getElementById('setting-scene-brightness');
+    const valSceneBrightness = document.getElementById('scene-brightness-val');
+    if (sliderSceneBrightness && valSceneBrightness) {
+      sliderSceneBrightness.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const floatVal = val / 10.0;
+        valSceneBrightness.textContent = floatVal.toFixed(1) + 'x';
+        this.sceneBrightness = floatVal;
+        this.updateLightsIntensity();
       });
     }
 
