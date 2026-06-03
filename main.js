@@ -1413,6 +1413,11 @@ class App {
             }
           }
         }
+      } else {
+        // Clicked on empty space! Go back to the main un-zoomed carousel/grid view.
+        if (this.isZoomed) {
+          this.deselectFocusedAlbum();
+        }
       }
     }
   }
