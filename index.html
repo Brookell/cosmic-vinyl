@@ -317,6 +317,23 @@
           <label for="setting-speed">Particle Speed: <span id="speed-val">1.0x</span></label>
           <input type="range" id="setting-speed" min="10" max="300" step="10" value="100">
         </div>
+        <div class="settings-group">
+          <label for="setting-trail-width">Ink Line Width: <span id="trail-width-val">0.12</span></label>
+          <input type="range" id="setting-trail-width" min="5" max="30" step="1" value="12">
+        </div>
+        <div class="settings-group">
+          <label for="setting-trail-color">Ink Color:</label>
+          <select id="setting-trail-color" class="settings-select" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); padding: 4px; font-size: 11px; width: 100%; font-family: var(--font-sans); margin-top: 4px; cursor: pointer; outline: none;">
+            <option value="white" selected>Star White (Classic)</option>
+            <option value="soft-cyan">Soft Cyan</option>
+            <option value="soft-pink">Soft Pink</option>
+            <option value="indigo">Indigo Blue</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <label for="setting-trail-light">Light Glow: <span id="trail-light-val">0.0x</span></label>
+          <input type="range" id="setting-trail-light" min="0" max="20" step="2" value="0">
+        </div>
       </div>
     </div>
 

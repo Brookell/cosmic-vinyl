@@ -52,17 +52,19 @@ class App {
     this.pointer = new THREE.Vector2();
     
     // Mouse Trail / Dynamic Follow Light State
-    this.MAX_TRAIL_PARTICLES = 80;
-    this.trailParticles = [];
+    this.MAX_HISTORY = 45;
+    this.trailHistory = [];
     this.trailGeometry = null;
     this.trailMaterial = null;
-    this.trailPoints = null;
+    this.trailMesh = null;
     this.mouse3D = null;
     this.targetMouse3D = null;
     this.lastMouseMoveTime = 0;
     this.mouseLight = null;
     this.mousePlane = null;
-    this.trailSpawnIndex = 0;
+    this.trailWidthSetting = 0.12;
+    this.trailColorStyle = 'white';
+    this.trailLightIntensity = 0.0;
     
     // Gesture Slide State
     this.isGestureSliding = false;
@@ -249,55 +251,94 @@ class App {
     this.scene.add(this.starfield);
   }
 
-  // Create dynamic light follow and stardust particle trail for mouse movement
+  // Create classical Chinese ink-wash style brush stroke ribbon trail
   createMouseTrail() {
-    this.MAX_TRAIL_PARTICLES = 80;
-    this.trailParticles = [];
-    for (let i = 0; i < this.MAX_TRAIL_PARTICLES; i++) {
-      this.trailParticles.push({
-        position: new THREE.Vector3(0, 0, 0),
-        velocity: new THREE.Vector3(0, 0, 0),
-        color: new THREE.Color(),
-        size: 0,
-        life: 0,
-        maxLife: 0
-      });
-    }
-
+    this.MAX_HISTORY = 45;
+    this.trailHistory = [];
+    
+    // Dynamic BufferGeometry for a continuous quad strip (ribbon)
     this.trailGeometry = new THREE.BufferGeometry();
-    this.trailPositions = new Float32Array(this.MAX_TRAIL_PARTICLES * 3);
-    this.trailColors = new Float32Array(this.MAX_TRAIL_PARTICLES * 3);
-    this.trailSizes = new Float32Array(this.MAX_TRAIL_PARTICLES);
-
+    const maxVertices = this.MAX_HISTORY * 2;
+    this.trailPositions = new Float32Array(maxVertices * 3);
+    this.trailUVs = new Float32Array(maxVertices * 2);
+    this.trailColors = new Float32Array(maxVertices * 3);
+    
     this.trailGeometry.setAttribute('position', new THREE.BufferAttribute(this.trailPositions, 3));
+    this.trailGeometry.setAttribute('uv', new THREE.BufferAttribute(this.trailUVs, 2));
     this.trailGeometry.setAttribute('color', new THREE.BufferAttribute(this.trailColors, 3));
-    this.trailGeometry.setAttribute('size', new THREE.BufferAttribute(this.trailSizes, 1));
+    
+    // Pre-build index buffer for connected quads
+    const maxIndices = (this.MAX_HISTORY - 1) * 6;
+    const indices = new Uint16Array(maxIndices);
+    for (let i = 0; i < this.MAX_HISTORY - 1; i++) {
+      const v0 = i * 2;
+      const v1 = i * 2 + 1;
+      const v2 = (i + 1) * 2;
+      const v3 = (i + 1) * 2 + 1;
+      
+      indices[i * 6] = v0;
+      indices[i * 6 + 1] = v1;
+      indices[i * 6 + 2] = v2;
+      
+      indices[i * 6 + 3] = v1;
+      indices[i * 6 + 4] = v3;
+      indices[i * 6 + 5] = v2;
+    }
+    this.trailGeometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    this.trailGeometry.setDrawRange(0, 0); // Initially hidden
 
-    const starTexture = this.generateStarTexture();
+    const inkTexture = this.generateInkTexture();
 
-    this.trailMaterial = new THREE.PointsMaterial({
-      size: 0.12, // smaller stardust specks for delicate look
-      map: starTexture,
+    // DoubleSide so the stroke is visible from front and back
+    this.trailMaterial = new THREE.MeshBasicMaterial({
+      map: inkTexture,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
-      opacity: 0.55 // more transparent stardust
+      side: THREE.DoubleSide
     });
 
-    this.trailPoints = new THREE.Points(this.trailGeometry, this.trailMaterial);
-    this.scene.add(this.trailPoints);
+    this.trailMesh = new THREE.Mesh(this.trailGeometry, this.trailMaterial);
+    this.scene.add(this.trailMesh);
 
-    // Initial mouse positions (depth z = 2.0, further from albums)
-    this.mouse3D = new THREE.Vector3(0, 0, 2.0);
-    this.targetMouse3D = new THREE.Vector3(0, 0, 2.0);
+    // Initial mouse positions (depth z = 1.0, positioned nicely)
+    this.mouse3D = new THREE.Vector3(0, 0, 1.0);
+    this.targetMouse3D = new THREE.Vector3(0, 0, 1.0);
     this.lastMouseMoveTime = 0;
 
-    // Soft point light with wider range and lower intensity (no harsh hot-spots)
+    // Ambient light following the mouse (defaulting to 0.0 intensity as requested)
     this.mouseLight = new THREE.PointLight(0x00f0ff, 0, 20, 2.0);
     this.scene.add(this.mouseLight);
 
-    this.trailSpawnIndex = 0;
+    // Custom configuration parameters
+    this.trailWidthSetting = 0.12;  // Width of the ink stroke
+    this.trailColorStyle = 'white'; // 'white' (Classic Ink), 'soft-cyan', 'soft-pink', 'indigo'
+    this.trailLightIntensity = 0.0; // Glow intensity factor (default 0.0, i.e., off)
+  }
+
+  // Create a feathered linear gradient texture that looks like an ink stroke bleed
+  generateInkTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    // Gradient along X-axis (feathered brush center)
+    const grad = ctx.createLinearGradient(0, 0, 16, 0);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    grad.addColorStop(0.15, 'rgba(255, 255, 255, 0.08)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 1.0)'); // Darker/more solid in middle
+    grad.addColorStop(0.85, 'rgba(255, 255, 255, 0.08)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 16, 128);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    return texture;
   }
 
   updateMousePosition(e) {
@@ -305,7 +346,7 @@ class App {
     this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
     
     if (!this.mousePlane) {
-      this.mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -2.0); // Plane facing camera at z = 2.0
+      this.mousePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -1.0); // Plane facing camera at z = 1.0
     }
     
     if (this.camera) {
@@ -316,122 +357,127 @@ class App {
   }
 
   updateMouseTrail(time) {
-    if (!this.trailGeometry || !this.mouseLight) return;
+    if (!this.trailGeometry || !this.mouseLight || !this.trailMesh) return;
 
     const positions = this.trailGeometry.attributes.position.array;
+    const uvs = this.trailGeometry.attributes.uv.array;
     const colors = this.trailGeometry.attributes.color.array;
 
     const idleTime = Date.now() - this.lastMouseMoveTime;
     
     // Smooth lag behind mouse movements for fluid flow feel
-    this.mouse3D.lerp(this.targetMouse3D, 0.12);
+    this.mouse3D.lerp(this.targetMouse3D, 0.15);
 
-    // Fade and animate mouse light color
-    if (idleTime < 2000) {
-      // Soft pastel color cycle
+    // Fade and animate mouse light intensity scaled by settings
+    if (idleTime < 2000 && this.trailLightIntensity > 0) {
       const hue = (time * 0.08) % 1.0;
       this.mouseLight.color.setHSL(hue, 0.7, 0.5);
       
-      // Extremely soft ambient intensity: max is around 0.8
       const dist = this.mouse3D.distanceTo(this.targetMouse3D);
-      const targetIntensity = 0.5 + dist * 1.5;
+      const targetIntensity = (0.5 + dist * 2.0) * this.trailLightIntensity;
       this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, targetIntensity, 0.1);
     } else {
-      this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, 0, 0.03);
+      this.mouseLight.intensity = THREE.MathUtils.lerp(this.mouseLight.intensity, 0, 0.05);
     }
-    // Place point light slightly in front of particles so it shines broadly on album sleeves
     this.mouseLight.position.set(this.mouse3D.x, this.mouse3D.y, this.mouse3D.z + 1.0);
 
-    // Spawn new stardust flow particles
-    if (idleTime < 2000) {
-      const dist = this.mouse3D.distanceTo(this.targetMouse3D);
-      const spawnCount = Math.min(3, Math.max(1, Math.floor(dist * 12) + 1));
-      
-      for (let s = 0; s < spawnCount; s++) {
-        const p = this.trailParticles[this.trailSpawnIndex];
-        
-        // Spawn slightly clustered around mouse cursor
-        p.position.copy(this.mouse3D);
-        p.position.x += (Math.random() - 0.5) * 0.18;
-        p.position.y += (Math.random() - 0.5) * 0.18;
-        p.position.z += (Math.random() - 0.5) * 0.18;
-        
-        // Initial random velocity
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 0.005 + Math.random() * 0.02;
-        p.velocity.set(
-          Math.cos(angle) * speed,
-          Math.sin(angle) * speed + 0.002, // subtle float up
-          (Math.random() - 0.5) * 0.01
-        );
-        
-        // Soft pastel/star stardust colors (much less saturated/bright)
-        const rand = Math.random();
-        if (rand < 0.4) {
-          p.color.setRGB(0.3, 0.75, 0.9); // Faint cyan stardust
-        } else if (rand < 0.75) {
-          p.color.setRGB(0.7, 0.45, 0.9); // Soft lilac stardust
-        } else {
-          p.color.setRGB(0.9, 0.5, 0.7); // Pastel rose stardust
+    // Add current position to trail history when mouse is active
+    if (idleTime < 1500) {
+      // Avoid adding duplicate points if the mouse hasn't moved
+      if (this.trailHistory.length === 0 || this.mouse3D.distanceTo(this.trailHistory[this.trailHistory.length - 1]) > 0.01) {
+        this.trailHistory.push(this.mouse3D.clone());
+        if (this.trailHistory.length > this.MAX_HISTORY) {
+          this.trailHistory.shift();
         }
-        
-        p.life = 1.0;
-        p.maxLife = 25 + Math.floor(Math.random() * 20); // shorter frames of life for cleaner trail
-        
-        this.trailSpawnIndex = (this.trailSpawnIndex + 1) % this.MAX_TRAIL_PARTICLES;
+      }
+    } else {
+      // Slowly decay/shrink the trail when idle to make it disappear
+      if (this.trailHistory.length > 0 && time % 0.05 < 0.02) {
+        this.trailHistory.shift();
       }
     }
 
-    // Update active stardust flow mechanics
-    for (let i = 0; i < this.MAX_TRAIL_PARTICLES; i++) {
-      const p = this.trailParticles[i];
+    const L = this.trailHistory.length;
+    if (L < 2) {
+      this.trailGeometry.setDrawRange(0, 0);
+      return;
+    }
+
+    const S = L - 1;
+
+    // Define base ink color
+    let baseColor = new THREE.Color(0xe2e8f0); // default Star White
+    if (this.trailColorStyle === 'soft-cyan') {
+      baseColor.setHex(0x38bdf8);
+    } else if (this.trailColorStyle === 'soft-pink') {
+      baseColor.setHex(0xf472b6);
+    } else if (this.trailColorStyle === 'indigo') {
+      baseColor.setHex(0x6366f1);
+    }
+
+    // Reconstruct ribbon strip
+    for (let i = 0; i < L; i++) {
+      const P_curr = this.trailHistory[i];
       
-      if (p.life > 0) {
-        p.life -= 1.0 / p.maxLife;
-        
-        // Light Gathering (光线聚集) - gravity pull towards cursor position
-        const toMouse = new THREE.Vector3().subVectors(this.mouse3D, p.position);
-        const dist = toMouse.length();
-        if (dist > 0.05) {
-          toMouse.normalize();
-          
-          // Force drawing them in
-          p.velocity.addScaledVector(toMouse, 0.0006);
-          
-          // Flow vortex swirling follow effect (cross product)
-          const vortex = new THREE.Vector3(-toMouse.y, toMouse.x, 0);
-          p.velocity.addScaledVector(vortex, 0.0004);
-        }
-        
-        // Kinetic drag
-        p.velocity.multiplyScalar(0.94);
-        
-        // Apply position delta
-        p.position.add(p.velocity);
-        
-        // Update buffers
-        positions[i * 3] = p.position.x;
-        positions[i * 3 + 1] = p.position.y;
-        positions[i * 3 + 2] = p.position.z;
-        
-        // Fade out stardust towards black (additive blend opacity)
-        const fade = p.life * p.life; // squared fade for smoother dropoff
-        colors[i * 3] = p.color.r * fade;
-        colors[i * 3 + 1] = p.color.g * fade;
-        colors[i * 3 + 2] = p.color.b * fade;
+      // Calculate tangent
+      let T = new THREE.Vector3();
+      if (i === 0) {
+        T.subVectors(this.trailHistory[1], this.trailHistory[0]);
+      } else if (i === S) {
+        T.subVectors(this.trailHistory[S], this.trailHistory[S - 1]);
       } else {
-        // Offscreen and black
-        positions[i * 3] = 9999;
-        positions[i * 3 + 1] = 9999;
-        positions[i * 3 + 2] = 9999;
-        colors[i * 3] = 0;
-        colors[i * 3 + 1] = 0;
-        colors[i * 3 + 2] = 0;
+        T.subVectors(this.trailHistory[i + 1], this.trailHistory[i - 1]);
       }
+      T.normalize();
+      
+      // Normal perpendicular to tangent and Z-axis
+      const N = new THREE.Vector3(-T.y, T.x, 0).normalize();
+      
+      // Tapering width: thinnest at tail (i=0), thickest at head (i=S)
+      const taper = Math.min(1.0, (i / S) * 1.5);
+      const w = this.trailWidthSetting * taper;
+      
+      // Calculate ribbon edge vertices
+      const v_left = new THREE.Vector3().copy(P_curr).addScaledVector(N, w);
+      const v_right = new THREE.Vector3().copy(P_curr).addScaledVector(N, -w);
+      
+      const v0 = i * 2;
+      const v1 = i * 2 + 1;
+      
+      // Write positions
+      positions[v0 * 3] = v_left.x;
+      positions[v0 * 3 + 1] = v_left.y;
+      positions[v0 * 3 + 2] = v_left.z;
+      
+      positions[v1 * 3] = v_right.x;
+      positions[v1 * 3 + 1] = v_right.y;
+      positions[v1 * 3 + 2] = v_right.z;
+      
+      // Write UVs (U maps to width 0-1, V maps to length 0-1)
+      const vRatio = i / S;
+      uvs[v0 * 2] = 0;
+      uvs[v0 * 2 + 1] = vRatio;
+      
+      uvs[v1 * 2] = 1;
+      uvs[v1 * 2 + 1] = vRatio;
+      
+      // Fade out trail towards the tail using vertex color scaling
+      const fade = Math.pow(vRatio, 1.6);
+      colors[v0 * 3] = baseColor.r * fade;
+      colors[v0 * 3 + 1] = baseColor.g * fade;
+      colors[v0 * 3 + 2] = baseColor.b * fade;
+      
+      colors[v1 * 3] = baseColor.r * fade;
+      colors[v1 * 3 + 1] = baseColor.g * fade;
+      colors[v1 * 3 + 2] = baseColor.b * fade;
     }
 
     this.trailGeometry.attributes.position.needsUpdate = true;
+    this.trailGeometry.attributes.uv.needsUpdate = true;
     this.trailGeometry.attributes.color.needsUpdate = true;
+    
+    // Draw quad strip
+    this.trailGeometry.setDrawRange(0, S * 6);
   }
 
   // Create radial alpha texture for soft circular stars
@@ -1005,6 +1051,38 @@ class App {
         const val = parseInt(e.target.value);
         valSpeed.textContent = (val / 100.0).toFixed(1) + 'x';
         this.particleSpeedSetting = val / 100.0;
+      });
+    }
+
+    // Ink Trail Width Binding
+    const sliderTrailWidth = document.getElementById('setting-trail-width');
+    const valTrailWidth = document.getElementById('trail-width-val');
+    if (sliderTrailWidth && valTrailWidth) {
+      sliderTrailWidth.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const floatVal = val / 100.0;
+        valTrailWidth.textContent = floatVal.toFixed(2);
+        this.trailWidthSetting = floatVal;
+      });
+    }
+
+    // Ink Trail Color Binding
+    const selectTrailColor = document.getElementById('setting-trail-color');
+    if (selectTrailColor) {
+      selectTrailColor.addEventListener('change', (e) => {
+        this.trailColorStyle = e.target.value;
+      });
+    }
+
+    // Ink Trail Light Glow Binding
+    const sliderTrailLight = document.getElementById('setting-trail-light');
+    const valTrailLight = document.getElementById('trail-light-val');
+    if (sliderTrailLight && valTrailLight) {
+      sliderTrailLight.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        const floatVal = val / 10.0;
+        valTrailLight.textContent = floatVal.toFixed(1) + 'x';
+        this.trailLightIntensity = floatVal;
       });
     }
 
