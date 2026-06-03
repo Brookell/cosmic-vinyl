@@ -5,7 +5,7 @@ import { audio } from './audio.js';
 import { gestures } from './gestures.js';
 
 // --- CONFIGURATION CONSTANTS ---
-let NUM_ALBUMS = 7;
+let NUM_ALBUMS = audio.tracks.length;
 const ALBUM_WIDTH = 2.2;
 const ALBUM_HEIGHT = 2.2;
 const VINYL_ROTATION_SPEED = 2.5;
