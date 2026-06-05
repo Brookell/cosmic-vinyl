@@ -27,6 +27,7 @@ class App {
     this.starPositions = null; // Float32Array cache of original star points
     this.starsCount = 4000;
     this.particleSpeedSetting = 1.0;
+    this.particleBounceSetting = 1.0; // Dynamic bounce/float setting
     this.bgBrightnessSetting = 1.0; // 1.0x is default 20% in UI
     
     // Carousel Interaction State
@@ -1076,6 +1077,16 @@ class App {
       });
     }
 
+    const sliderBounce = document.getElementById('setting-bounce');
+    const valBounce = document.getElementById('bounce-val');
+    if (sliderBounce && valBounce) {
+      sliderBounce.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        valBounce.textContent = (val / 100.0).toFixed(1) + 'x';
+        this.particleBounceSetting = val / 100.0;
+      });
+    }
+
     // Ink Trail Width Binding
     const sliderTrailWidth = document.getElementById('setting-trail-width');
     const valTrailWidth = document.getElementById('trail-width-val');
@@ -1912,18 +1923,18 @@ class App {
         const radialDist = Math.sqrt(origX * origX + origY * origY + origZ * origZ);
 
         // Ripple offset formula
-        const ripple = Math.sin(radialDist * 0.35 - speedTime * 2.5) * 0.35 * bassIntensity;
+        const ripple = Math.sin(radialDist * 0.35 - speedTime * 2.5) * 0.35 * bassIntensity * this.particleBounceSetting;
 
         // Apply position displacement
         // Push stars outward if pinch warp active
         const warpOffset = 1.0 + (this.warpFactor * (2.0 / (radialDist + 0.1)));
         
         // Rhythmic pulsing expanding waves matching music beat (bass)
-        const rhythmPulse = bassIntensity * 0.22 * Math.sin(radialDist * 1.5 - speedTime * 8.0);
+        const rhythmPulse = bassIntensity * 0.22 * Math.sin(radialDist * 1.5 - speedTime * 8.0) * this.particleBounceSetting;
         const finalWarp = warpOffset * (1.0 + rhythmPulse);
 
         // Jitter/Vibration dance based on beat volume
-        const randomVibration = (Math.sin(i * 123.45 + time * 25.0) * 0.05) * bassIntensity;
+        const randomVibration = (Math.sin(i * 123.45 + time * 25.0) * 0.05) * bassIntensity * this.particleBounceSetting;
 
         positions[i * 3] = origX * finalWarp + randomVibration;
         positions[i * 3 + 1] = origY * finalWarp + ripple + randomVibration;
