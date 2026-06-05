@@ -1837,7 +1837,7 @@ class App {
       if (slideIndex === 4) {
         if (startBtn) {
           startBtn.classList.remove('hidden');
-          startBtn.textContent = this.isReplayingTutorial ? "关闭指引" : "开启摄像头并进入";
+          startBtn.textContent = this.isReplayingTutorial ? "CLOSE GUIDE" : "START GESTURE MODE";
         }
         if (nextBtn) {
           nextBtn.classList.remove('highlight');
