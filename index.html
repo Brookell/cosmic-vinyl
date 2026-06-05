@@ -339,6 +339,9 @@
           <label for="setting-bounce">Particle Bounce: <span id="bounce-val">1.0x</span></label>
           <input type="range" id="setting-bounce" min="0" max="250" step="10" value="100">
         </div>
+        <div class="settings-group" style="margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 15px; margin-bottom: 0;">
+          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);">📖 重看手势新手引导</button>
+        </div>
       </div>
     </div>
     <div id="webcam-monitor" class="glass hidden">
@@ -358,14 +361,233 @@
     </div>
   </div>
 
-  <!-- Onboarding Splash Overlay (Minimal Style) -->
-  <div id="onboarding" class="overlay">
-    <div class="onboarding-card glass" style="max-width: 420px; gap: 20px; padding: 32px;">
-      <h2 style="font-size: 32px; font-weight: 800; letter-spacing: 0.5px; margin: 0;">COSMIC VINYL</h2>
-      <h3 style="font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-secondary); text-transform: uppercase; margin: 0 0 10px 0;">3D AUDIO GALLERY</h3>
+  <!-- Onboarding Splash Overlay (Step-by-step Style) -->
+  <div id="onboarding" class="overlay animate-fade-in">
+    <div class="onboarding-card glass" id="onboarding-card">
       
-      <button id="btn-start" class="start-btn" style="width: 100%; margin: 0;">ENABLE CAMERA & ENTER</button>
-      <button id="btn-start-no-cam" class="start-btn secondary" style="width: 100%; margin: 0;">ENTER WITH MOUSE/KEYS</button>
+      <!-- Skip Tutorial button -->
+      <button id="btn-skip-tutorial" class="skip-btn hidden">SKIP GUIDE</button>
+
+      <!-- Welcome Slide (Slide 0) -->
+      <div class="onboarding-slide active" data-slide="0">
+        <div class="onboarding-logo-area">
+          <h2 class="title-main">COSMIC VINYL</h2>
+          <h3 class="subtitle-sub">3D AUDIO GALLERY</h3>
+        </div>
+        <div class="onboarding-desc">
+          欢迎来到 Cosmic Vinyl！这是一个支持手势控制的 3D 音乐空间。<br>
+          建议使用摄像头进行手势交互，享受指尖飞入式操控。
+        </div>
+        <div class="onboarding-mode-selection">
+          <button id="btn-choose-gesture" class="start-btn">
+            <span class="btn-icon">✨</span>开启摄像头手势模式
+          </button>
+          <button id="btn-choose-mouse" class="start-btn secondary">
+            <span class="btn-icon">🖱️</span>使用鼠标键盘浏览
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide 1: Browse (五指张开左右滑动) -->
+      <div class="onboarding-slide" data-slide="1">
+        <div class="gesture-visual-container">
+          <svg class="gesture-visual-svg" viewBox="0 0 100 100">
+            <!-- Swipe arrows -->
+            <path class="swipe-arrow left" d="M12 50 L22 42 M12 50 L22 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" fill="none" />
+            <path class="swipe-arrow right" d="M88 50 L78 42 M88 50 L78 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" fill="none" />
+            <line class="swipe-line" x1="15" y1="50" x2="85" y2="50" stroke="var(--accent-cyan)" stroke-width="1.5" stroke-dasharray="4,4" stroke-linecap="round" />
+            
+            <!-- Open Hand Group (moves left & right) -->
+            <g class="hand-group swipe-hand-anim">
+              <!-- Wrist to palm base -->
+              <line x1="50" y1="80" x2="50" y2="60" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" />
+              <!-- Palm base to fingers -->
+              <path d="M50 60 L38 65 L27 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L39 46 L37 35 L36 23" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L48 44 L48 30 L48 16" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L58 46 L60 33 L61 21" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L67 50 L70 40 L72 30" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              
+              <!-- Joint dots -->
+              <circle cx="50" cy="80" r="2.5" fill="#bd00ff" />
+              <circle cx="50" cy="60" r="3" fill="#bd00ff" />
+              <circle cx="38" cy="65" r="2.5" fill="#bd00ff" />
+              <circle cx="27" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="39" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="37" cy="35" r="2.5" fill="#bd00ff" />
+              <circle cx="36" cy="23" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="44" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="30" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="16" r="2.5" fill="#bd00ff" />
+              <circle cx="58" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="60" cy="33" r="2.5" fill="#bd00ff" />
+              <circle cx="61" cy="21" r="2.5" fill="#bd00ff" />
+              <circle cx="67" cy="50" r="2.5" fill="#bd00ff" />
+              <circle cx="70" cy="40" r="2.5" fill="#bd00ff" />
+              <circle cx="72" cy="30" r="2.5" fill="#bd00ff" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="slide-title">第一步：张开五指 左右滑动</h3>
+        <p class="slide-text">
+          在摄像头前<strong>伸开五指</strong>左右挥动，即可流畅地左右切换并浏览 3D 唱片墙上的所有音乐。
+        </p>
+      </div>
+
+      <!-- Slide 2: Focus (停留) -->
+      <div class="onboarding-slide" data-slide="2">
+        <div class="gesture-visual-container">
+          <svg class="gesture-visual-svg" viewBox="0 0 100 100">
+            <!-- Pulsing Target Circle -->
+            <circle class="target-pulse-circle" cx="50" cy="48" r="36" stroke="var(--accent-cyan)" stroke-dasharray="6,4" stroke-width="1.5" fill="none" opacity="0.7"/>
+            <circle class="target-inner-circle" cx="50" cy="48" r="8" fill="rgba(0, 240, 255, 0.1)" stroke="var(--accent-cyan)" stroke-width="1"/>
+            
+            <!-- Open Hand Group (Hovering still) -->
+            <g class="hand-group hover-hand-anim">
+              <!-- Wrist to palm base -->
+              <line x1="50" y1="80" x2="50" y2="60" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" />
+              <!-- Palm base to fingers -->
+              <path d="M50 60 L38 65 L27 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L39 46 L37 35 L36 23" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L48 44 L48 30 L48 16" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L58 46 L60 33 L61 21" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L67 50 L70 40 L72 30" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              
+              <!-- Joint dots -->
+              <circle cx="50" cy="80" r="2.5" fill="#bd00ff" />
+              <circle cx="50" cy="60" r="3" fill="#bd00ff" />
+              <circle cx="38" cy="65" r="2.5" fill="#bd00ff" />
+              <circle cx="27" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="39" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="37" cy="35" r="2.5" fill="#bd00ff" />
+              <circle cx="36" cy="23" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="44" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="30" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="16" r="2.5" fill="#bd00ff" />
+              <circle cx="58" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="60" cy="33" r="2.5" fill="#bd00ff" />
+              <circle cx="61" cy="21" r="2.5" fill="#bd00ff" />
+              <circle cx="67" cy="50" r="2.5" fill="#bd00ff" />
+              <circle cx="70" cy="40" r="2.5" fill="#bd00ff" />
+              <circle cx="72" cy="30" r="2.5" fill="#bd00ff" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="slide-title">第二步：停留悬停 聚焦唱片</h3>
+        <p class="slide-text">
+          将手部<strong>保持静止停留在某张唱片上</strong>，该唱片将被聚焦拉近，并自动展示其曲目详情。
+        </p>
+      </div>
+
+      <!-- Slide 3: Play (握拳播放) -->
+      <div class="onboarding-slide" data-slide="3">
+        <div class="gesture-visual-container">
+          <svg class="gesture-visual-svg" viewBox="0 0 100 100">
+            <!-- Loading circle base & progress animated -->
+            <circle class="loading-ring-bg" cx="50" cy="48" r="38" stroke="rgba(255,255,255,0.06)" stroke-width="2" fill="none" />
+            <circle class="loading-ring-fg" cx="50" cy="48" r="38" stroke="var(--accent-cyan)" stroke-width="3" stroke-dasharray="238.7" stroke-dashoffset="238.7" fill="none" stroke-linecap="round"/>
+            
+            <!-- Fist Hand Group -->
+            <g class="hand-group fist-hand-anim">
+              <!-- Wrist to palm base -->
+              <line x1="50" y1="80" x2="50" y2="60" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" />
+              <!-- Palm base to fingers (curled) -->
+              <path d="M50 60 L38 65 L43 61" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L38 52 L42 54 L45 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L47 50 L48 53 L49 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L56 51 L54 54 L52 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L64 54 L60 56 L56 59" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              
+              <!-- Joint dots -->
+              <circle cx="50" cy="80" r="2.5" fill="#bd00ff" />
+              <circle cx="50" cy="60" r="3" fill="#bd00ff" />
+              <circle cx="38" cy="65" r="2.5" fill="#bd00ff" />
+              <circle cx="43" cy="61" r="2.5" fill="#bd00ff" />
+              <circle cx="38" cy="52" r="2.5" fill="#bd00ff" />
+              <circle cx="42" cy="54" r="2.5" fill="#bd00ff" />
+              <circle cx="45" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="47" cy="50" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="53" r="2.5" fill="#bd00ff" />
+              <circle cx="49" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="56" cy="51" r="2.5" fill="#bd00ff" />
+              <circle cx="54" cy="54" r="2.5" fill="#bd00ff" />
+              <circle cx="52" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="64" cy="54" r="2.5" fill="#bd00ff" />
+              <circle cx="60" cy="56" r="2.5" fill="#bd00ff" />
+              <circle cx="56" cy="59" r="2.5" fill="#bd00ff" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="slide-title">第三步：握紧拳头 确认播放</h3>
+        <p class="slide-text">
+          在唱片聚焦拉近后，<strong>用力握紧拳头并保持2秒</strong>。当环形进度条加载充满，唱片将飞入唱片机播放！
+        </p>
+      </div>
+
+      <!-- Slide 4: Return (再五指张开返回) -->
+      <div class="onboarding-slide" data-slide="4">
+        <div class="gesture-visual-container">
+          <svg class="gesture-visual-svg" viewBox="0 0 100 100">
+            <!-- Outward return circles/arrows -->
+            <path class="return-arrow-arc" d="M25 25 A35 35 0 0 1 75 25 M75 25 L68 18 M75 25 L68 32" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path class="return-arrow-arc bottom" d="M75 70 A35 35 0 0 1 25 70 M25 70 L32 63 M25 70 L32 77" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.5" />
+            
+            <!-- Open Hand Group (transitions or moves backward) -->
+            <g class="hand-group return-hand-anim">
+              <!-- Wrist to palm base -->
+              <line x1="50" y1="80" x2="50" y2="60" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" />
+              <!-- Palm base to fingers -->
+              <path d="M50 60 L38 65 L27 58" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L39 46 L37 35 L36 23" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L48 44 L48 30 L48 16" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L58 46 L60 33 L61 21" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M50 60 L67 50 L70 40 L72 30" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              
+              <!-- Joint dots -->
+              <circle cx="50" cy="80" r="2.5" fill="#bd00ff" />
+              <circle cx="50" cy="60" r="3" fill="#bd00ff" />
+              <circle cx="38" cy="65" r="2.5" fill="#bd00ff" />
+              <circle cx="27" cy="58" r="2.5" fill="#bd00ff" />
+              <circle cx="39" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="37" cy="35" r="2.5" fill="#bd00ff" />
+              <circle cx="36" cy="23" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="44" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="30" r="2.5" fill="#bd00ff" />
+              <circle cx="48" cy="16" r="2.5" fill="#bd00ff" />
+              <circle cx="58" cy="46" r="2.5" fill="#bd00ff" />
+              <circle cx="60" cy="33" r="2.5" fill="#bd00ff" />
+              <circle cx="61" cy="21" r="2.5" fill="#bd00ff" />
+              <circle cx="67" cy="50" r="2.5" fill="#bd00ff" />
+              <circle cx="70" cy="40" r="2.5" fill="#bd00ff" />
+              <circle cx="72" cy="30" r="2.5" fill="#bd00ff" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="slide-title">第四步：伸开手掌 即可返回</h3>
+        <p class="slide-text">
+          在音乐播放时，<strong>再次伸开五指</strong>即可退出播放、退回墙面。唱片回位后，您可以继续滑动挑选其他歌曲。
+        </p>
+      </div>
+
+      <!-- Navigation & Pagination Footer -->
+      <div class="onboarding-navigation hidden" id="onboarding-nav">
+        <button id="btn-prev-slide" class="nav-arrow-btn" disabled>
+          <svg viewBox="0 0 24 24" class="nav-icon"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
+        </button>
+        <div class="pagination-dots" id="pagination-dots">
+          <span class="dot active" data-slide-target="1"></span>
+          <span class="dot" data-slide-target="2"></span>
+          <span class="dot" data-slide-target="3"></span>
+          <span class="dot" data-slide-target="4"></span>
+        </div>
+        <button id="btn-next-slide" class="nav-arrow-btn highlight">
+          <svg viewBox="0 0 24 24" class="nav-icon"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/></svg>
+        </button>
+      </div>
+
+      <!-- Final Action button (hidden initially, shown on slide 4) -->
+      <button id="btn-start" class="start-btn hidden" style="width: 100%; margin: 10px 0 0 0;">开启摄像头并进入</button>
+
     </div>
   </div>
 

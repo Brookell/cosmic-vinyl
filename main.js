@@ -78,6 +78,8 @@ class App {
     // Texture caches
     this.albumCanvasTextures = [];
     this.activeView = 'carousel'; // 'carousel' or 'grid'
+    this.currentOnboardingSlide = 0;
+    this.isReplayingTutorial = false;
     this.viewTransitionProgress = 0.0;
     
     // Spotify UI State
@@ -954,9 +956,86 @@ class App {
       }
     });
 
-    // Onboarding Panel buttons
-    document.getElementById('btn-start').addEventListener('click', () => this.startExperience(true));
-    document.getElementById('btn-start-no-cam').addEventListener('click', () => this.startExperience(false));
+    // Onboarding Panel and slide events
+    const btnChooseGesture = document.getElementById('btn-choose-gesture');
+    const btnChooseMouse = document.getElementById('btn-choose-mouse');
+    const btnSkipTutorial = document.getElementById('btn-skip-tutorial');
+    const btnPrevSlide = document.getElementById('btn-prev-slide');
+    const btnNextSlide = document.getElementById('btn-next-slide');
+    const btnStart = document.getElementById('btn-start');
+
+    if (btnChooseGesture) {
+      btnChooseGesture.addEventListener('click', () => {
+        const onboarded = localStorage.getItem('cosmic_vinyl_onboarded');
+        if (onboarded === 'true') {
+          this.startExperience(true);
+        } else {
+          this.showOnboardingSlide(1);
+        }
+      });
+    }
+
+    if (btnChooseMouse) {
+      btnChooseMouse.addEventListener('click', () => {
+        this.startExperience(false);
+      });
+    }
+
+    if (btnSkipTutorial) {
+      btnSkipTutorial.addEventListener('click', () => {
+        if (this.isReplayingTutorial) {
+          this.hideOnboarding();
+          this.isReplayingTutorial = false;
+        } else {
+          this.startExperience(true);
+        }
+      });
+    }
+
+    if (btnPrevSlide) {
+      btnPrevSlide.addEventListener('click', () => {
+        if (this.currentOnboardingSlide > 1) {
+          this.showOnboardingSlide(this.currentOnboardingSlide - 1);
+        }
+      });
+    }
+
+    if (btnNextSlide) {
+      btnNextSlide.addEventListener('click', () => {
+        if (this.currentOnboardingSlide === 4) {
+          if (this.isReplayingTutorial) {
+            this.hideOnboarding();
+            this.isReplayingTutorial = false;
+          } else {
+            this.startExperience(true);
+          }
+        } else {
+          this.showOnboardingSlide(this.currentOnboardingSlide + 1);
+        }
+      });
+    }
+
+    if (btnStart) {
+      btnStart.addEventListener('click', () => {
+        if (this.isReplayingTutorial) {
+          this.hideOnboarding();
+          this.isReplayingTutorial = false;
+        } else {
+          this.startExperience(true);
+        }
+      });
+    }
+
+    // Dot navigation
+    const dots = document.querySelectorAll('.pagination-dots .dot');
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const target = parseInt(dot.getAttribute('data-slide-target'), 10);
+        if (target >= 1 && target <= 4) {
+          this.showOnboardingSlide(target);
+        }
+      });
+    });
 
     // HUD controls buttons
     document.getElementById('btn-play').addEventListener('click', () => audio.togglePlay());
@@ -1029,6 +1108,21 @@ class App {
         if (!settingsPanel.contains(e.target) && !settingsPanel.classList.contains('collapsed')) {
           settingsPanel.classList.add('collapsed');
         }
+      });
+    }
+
+    // Replay Tutorial button
+    const btnReplayTutorial = document.getElementById('btn-replay-tutorial');
+    if (btnReplayTutorial) {
+      btnReplayTutorial.addEventListener('click', () => {
+        if (settingsPanel) settingsPanel.classList.add('collapsed');
+        this.isReplayingTutorial = true;
+        
+        const onboarding = document.getElementById('onboarding');
+        if (onboarding) {
+          onboarding.classList.remove('hidden', 'fade-out');
+        }
+        this.showOnboardingSlide(1);
       });
     }
 
@@ -1672,18 +1766,91 @@ class App {
     }
   }
 
+  hideOnboarding() {
+    const onboarding = document.getElementById('onboarding');
+    if (onboarding) {
+      onboarding.classList.add('fade-out');
+      setTimeout(() => {
+        onboarding.classList.add('hidden');
+        onboarding.classList.remove('fade-out');
+      }, 500);
+    }
+  }
+
+  showOnboardingSlide(slideIndex) {
+    this.currentOnboardingSlide = slideIndex;
+    
+    // Select all slides
+    const slides = document.querySelectorAll('.onboarding-slide');
+    slides.forEach(slide => {
+      slide.classList.remove('active');
+    });
+    
+    // Activate target slide
+    const targetSlide = document.querySelector(`.onboarding-slide[data-slide="${slideIndex}"]`);
+    if (targetSlide) {
+      targetSlide.classList.add('active');
+    }
+    
+    // Elements to toggle based on slide index
+    const skipBtn = document.getElementById('btn-skip-tutorial');
+    const navBar = document.getElementById('onboarding-nav');
+    const startBtn = document.getElementById('btn-start');
+    const prevBtn = document.getElementById('btn-prev-slide');
+    const nextBtn = document.getElementById('btn-next-slide');
+    
+    if (slideIndex === 0) {
+      if (skipBtn) skipBtn.classList.add('hidden');
+      if (navBar) navBar.classList.add('hidden');
+      if (startBtn) startBtn.classList.add('hidden');
+    } else {
+      if (skipBtn) {
+        skipBtn.classList.remove('hidden');
+        skipBtn.textContent = this.isReplayingTutorial ? "CLOSE" : "SKIP GUIDE";
+      }
+      if (navBar) navBar.classList.remove('hidden');
+      
+      // Update dot pagination active state
+      const dots = document.querySelectorAll('.pagination-dots .dot');
+      dots.forEach(dot => {
+        const target = parseInt(dot.getAttribute('data-slide-target'), 10);
+        if (target === slideIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+      
+      // Update Arrow state
+      if (prevBtn) {
+        prevBtn.disabled = (slideIndex === 1);
+      }
+      
+      if (slideIndex === 4) {
+        if (startBtn) {
+          startBtn.classList.remove('hidden');
+          startBtn.textContent = this.isReplayingTutorial ? "关闭指引" : "开启摄像头并进入";
+        }
+        if (nextBtn) {
+          nextBtn.classList.remove('highlight');
+        }
+      } else {
+        if (startBtn) startBtn.classList.add('hidden');
+        if (nextBtn) {
+          nextBtn.classList.add('highlight');
+        }
+      }
+    }
+  }
+
   // Onboarding Start Click Action
   startExperience(enableWebcam) {
     // Audio Context initialization
     audio.init();
     
-    const onboarding = document.getElementById('onboarding');
-    onboarding.classList.add('fade-out');
+    this.hideOnboarding();
+    localStorage.setItem('cosmic_vinyl_onboarded', 'true');
     
-    setTimeout(() => {
-      onboarding.classList.add('hidden');
-    }, 500);
-
     // Initialize gestures once for overlay elements
     const webcamElement = document.getElementById('webcam');
     const overlayElement = document.getElementById('gesture-overlay');
