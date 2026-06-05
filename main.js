@@ -1048,6 +1048,19 @@ class App {
         }
       });
     }
+
+    // Header Tutorial button Action
+    const headerTutorial = document.getElementById('btn-header-tutorial');
+    if (headerTutorial) {
+      headerTutorial.addEventListener('click', () => {
+        this.isReplayingTutorial = true;
+        const onboarding = document.getElementById('onboarding');
+        if (onboarding) {
+          onboarding.classList.remove('hidden', 'fade-out');
+        }
+        this.showOnboardingSlide(1);
+      });
+    }
     
     document.getElementById('volume-slider').addEventListener('input', (e) => {
       audio.setVolume(e.target.value);
