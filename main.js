@@ -65,7 +65,7 @@ class App {
     this.lastMouseMoveTime = 0;
     this.mouseLight = null;
     this.mousePlane = null;
-    this.trailWidthSetting = 0.12;
+    this.trailWidthSetting = 0.045;
     this.trailColorStyle = 'white';
     this.trailLightIntensity = 0.0;
     this.trailSpawnIndex = 0;
@@ -258,13 +258,13 @@ class App {
     const starTexture = this.generateStarTexture();
 
     const material = new THREE.PointsMaterial({
-      size: 0.08, // smaller stars for realistic sky
+      size: 0.035, // much smaller stars for crisp look
       map: starTexture,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
-      opacity: 0.8
+      opacity: 0.85
     });
 
     this.starfield = new THREE.Points(geometry, material);
@@ -295,13 +295,13 @@ class App {
     const starTexture = this.generateStarTexture();
 
     this.trailMaterial = new THREE.PointsMaterial({
-      size: 0.12, // default soft stardust particle size
+      size: 0.045, // small trail particles
       map: starTexture,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       vertexColors: true,
-      opacity: 0.6 // semi-transparent stardust
+      opacity: 0.65 // semi-transparent stardust
     });
 
     this.trailPoints = new THREE.Points(this.trailGeometry, this.trailMaterial);
@@ -317,7 +317,7 @@ class App {
     this.scene.add(this.mouseLight);
 
     // Custom configuration parameters (bound to settings panel)
-    this.trailWidthSetting = 0.12;  // Size of the particles
+    this.trailWidthSetting = 0.045;  // Size of the particles
     this.trailColorStyle = 'white'; // 'white', 'soft-cyan', 'soft-pink', 'indigo'
     this.trailLightIntensity = 0.0; // PointLight intensity factor (default 0.0)
     
@@ -466,17 +466,15 @@ class App {
     this.trailGeometry.attributes.color.needsUpdate = true;
   }
 
-  // Create radial alpha texture for soft circular stars
   generateStarTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 4); // sharp tiny star dot, no color halo
     grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    grad.addColorStop(0.3, 'rgba(230, 248, 255, 0.8)');
-    grad.addColorStop(0.6, 'rgba(189, 0, 255, 0.2)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 16, 16);
     return new THREE.CanvasTexture(canvas);
@@ -1901,9 +1899,9 @@ class App {
       const bassIntensity = audioData.bass;
       const highIntensity = audioData.high;
 
-      // Twinkle size/opacity animations (smaller particles for realistic starfield)
-      this.starfield.material.size = 0.06 + highIntensity * 0.04;
-      this.starfield.material.opacity = 0.65 + Math.sin(time * 5.0) * 0.1 * (1.0 + highIntensity);
+      // Twinkle size/opacity animations (much smaller particles for clean background stardust)
+      this.starfield.material.size = 0.022 + highIntensity * 0.013;
+      this.starfield.material.opacity = 0.55 + Math.sin(time * 5.0) * 0.1 * (1.0 + highIntensity);
 
       for (let i = 0; i < this.starsCount; i++) {
         const origX = this.starPositions[i * 3];
@@ -1914,15 +1912,22 @@ class App {
         const radialDist = Math.sqrt(origX * origX + origY * origY + origZ * origZ);
 
         // Ripple offset formula
-        const ripple = Math.sin(radialDist * 0.35 - speedTime * 2.5) * 0.45 * bassIntensity;
+        const ripple = Math.sin(radialDist * 0.35 - speedTime * 2.5) * 0.35 * bassIntensity;
 
         // Apply position displacement
         // Push stars outward if pinch warp active
         const warpOffset = 1.0 + (this.warpFactor * (2.0 / (radialDist + 0.1)));
         
-        positions[i * 3] = origX * warpOffset;
-        positions[i * 3 + 1] = origY * warpOffset + ripple; // Wave ripple on Y axis
-        positions[i * 3 + 2] = origZ * warpOffset;
+        // Rhythmic pulsing expanding waves matching music beat (bass)
+        const rhythmPulse = bassIntensity * 0.22 * Math.sin(radialDist * 1.5 - speedTime * 8.0);
+        const finalWarp = warpOffset * (1.0 + rhythmPulse);
+
+        // Jitter/Vibration dance based on beat volume
+        const randomVibration = (Math.sin(i * 123.45 + time * 25.0) * 0.05) * bassIntensity;
+
+        positions[i * 3] = origX * finalWarp + randomVibration;
+        positions[i * 3 + 1] = origY * finalWarp + ripple + randomVibration;
+        positions[i * 3 + 2] = origZ * finalWarp + randomVibration;
       }
       this.starfield.geometry.attributes.position.needsUpdate = true;
     }
