@@ -371,12 +371,15 @@ body {
   border-radius: 12px;
 }
 
-/* Left: Track Info */
+/* Left: Track Info (Hidden per user request, kept in layout for centering) */
 .player-info {
   display: flex;
   align-items: center;
   gap: 16px;
   width: 25%;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .current-album-art {
