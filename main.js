@@ -966,12 +966,7 @@ class App {
 
     if (btnChooseGesture) {
       btnChooseGesture.addEventListener('click', () => {
-        const onboarded = localStorage.getItem('cosmic_vinyl_onboarded');
-        if (onboarded === 'true') {
-          this.startExperience(true);
-        } else {
-          this.showOnboardingSlide(1);
-        }
+        this.showOnboardingSlide(1);
       });
     }
 
