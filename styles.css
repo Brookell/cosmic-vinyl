@@ -474,11 +474,7 @@ body {
 }
 
 .progress-bar-container {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-sizing: border-box;
+  display: none !important;
 }
 
 .time-label {
@@ -1580,16 +1576,7 @@ body {
 }
 
 .control-btn-secondary {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  display: none !important;
 }
 
 .control-btn-secondary:hover {
