@@ -1727,18 +1727,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  background: rgba(4, 4, 6, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 28px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  border: none;
   z-index: 9999;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 .fist-loader-container.visible {
@@ -1747,6 +1746,7 @@ body {
 
 .progress-ring {
   transform: rotate(-90deg);
+  filter: drop-shadow(0 0 6px var(--accent-cyan));
 }
 
 .progress-ring__circle-bg {
@@ -1754,18 +1754,19 @@ body {
 }
 
 .progress-ring__circle {
-  stroke-dasharray: 263.89; /* 2 * PI * r (r=42) */
-  stroke-dashoffset: 263.89;
+  stroke-dasharray: 150.8; /* 2 * PI * r (r=24) */
+  stroke-dashoffset: 150.8;
   transition: stroke-dashoffset 0.08s linear;
 }
 
 .loader-label {
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--text-primary);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  color: rgba(255, 255, 255, 0.85);
   text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 /* Settings Panel styling */

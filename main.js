@@ -1663,12 +1663,12 @@ class App {
     
     if (progress > 0) {
       loader.classList.add('visible');
-      // SVG circumference is 263.89 (r=42)
-      const offset = 263.89 * (1 - progress);
+      // SVG circumference is 150.8 (r=24)
+      const offset = 150.8 * (1 - progress);
       ringCircle.style.strokeDashoffset = offset;
     } else {
       loader.classList.remove('visible');
-      ringCircle.style.strokeDashoffset = 263.89;
+      ringCircle.style.strokeDashoffset = 150.8;
     }
   }
 
