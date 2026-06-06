@@ -4,6 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Vinyl - 3D Gesture Audio Gallery</title>
+  <script>
+    window.addEventListener('error', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style.position = 'fixed';
+      errDiv.style.top = '10px';
+      errDiv.style.left = '10px';
+      errDiv.style.backgroundColor = 'rgba(255,0,0,0.9)';
+      errDiv.style.color = 'white';
+      errDiv.style.padding = '10px';
+      errDiv.style.zIndex = '99999';
+      errDiv.style.fontFamily = 'monospace';
+      errDiv.style.fontSize = '12px';
+      errDiv.style.border = '2px solid white';
+      errDiv.style.borderRadius = '8px';
+      errDiv.innerText = 'Error: ' + e.message + '\nFile: ' + e.filename + '\nLine: ' + e.lineno;
+      document.body.appendChild(errDiv);
+    });
+  </script>
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
