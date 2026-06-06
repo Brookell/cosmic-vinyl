@@ -169,6 +169,7 @@ class LanguageManager {
   }
 
   setLanguage(lang) {
+    console.log("LanguageManager: setLanguage called with:", lang);
     if (lang === 'en' || lang === 'zh') {
       this.currentLang = lang;
       localStorage.setItem('cosmic_vinyl_lang', lang);
@@ -180,6 +181,7 @@ class LanguageManager {
   }
 
   toggleLanguage() {
+    console.log("LanguageManager: toggling from", this.currentLang);
     this.setLanguage(this.currentLang === 'en' ? 'zh' : 'en');
   }
 
@@ -189,69 +191,74 @@ class LanguageManager {
   }
 
   updateDOM() {
-    // 1. Text translations (data-i18n)
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      el.innerHTML = this.t(key);
-    });
+    console.log("LanguageManager: updating DOM for", this.currentLang);
+    try {
+      // 1. Text translations (data-i18n)
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.innerHTML = this.t(key);
+      });
 
-    // 2. Title translations (data-i18n-title)
-    document.querySelectorAll('[data-i18n-title]').forEach(el => {
-      const key = el.getAttribute('data-i18n-title');
-      el.setAttribute('title', this.t(key));
-    });
+      // 2. Title translations (data-i18n-title)
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.setAttribute('title', this.t(key));
+      });
 
-    // 3. Placeholder translations (data-i18n-placeholder)
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      el.setAttribute('placeholder', this.t(key));
-    });
+      // 3. Placeholder translations (data-i18n-placeholder)
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.setAttribute('placeholder', this.t(key));
+      });
 
-    // 4. Update the language button text if exists
-    const langBtnText = document.getElementById('lang-toggle-text');
-    if (langBtnText) {
-      langBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
-    }
-    const onboardingLangBtnText = document.getElementById('lang-toggle-onboarding-text');
-    if (onboardingLangBtnText) {
-      onboardingLangBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
-    }
+      // 4. Update the language button text if exists
+      const langBtnText = document.getElementById('lang-toggle-text');
+      if (langBtnText) {
+        langBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
+      }
+      const onboardingLangBtnText = document.getElementById('lang-toggle-onboarding-text');
+      if (onboardingLangBtnText) {
+        onboardingLangBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
+      }
 
-    // 5. Update slider label prefixes dynamically (we'll also let main.js handle slider values updates on language switch)
-    const valStars = document.getElementById('stars-val');
-    const sliderStars = document.getElementById('setting-stars');
-    if (valStars && sliderStars) {
-      // Just re-display label with correct lang
-      const starsLabel = document.querySelector('[for="setting-stars"]');
-      if (starsLabel) starsLabel.innerHTML = `${this.t('particles_count')}<span id="stars-val">${sliderStars.value}</span>`;
-    }
+      // 5. Update slider label prefixes dynamically (we'll also let main.js handle slider values updates on language switch)
+      const valStars = document.getElementById('stars-val');
+      const sliderStars = document.getElementById('setting-stars');
+      if (valStars && sliderStars) {
+        // Just re-display label with correct lang
+        const starsLabel = document.querySelector('[for="setting-stars"]');
+        if (starsLabel) starsLabel.innerHTML = `${this.t('particles_count')}<span id="stars-val">${sliderStars.value}</span>`;
+      }
 
-    const valBrightness = document.getElementById('brightness-val');
-    const sliderBrightness = document.getElementById('setting-brightness');
-    if (valBrightness && sliderBrightness) {
-      const label = document.querySelector('[for="setting-brightness"]');
-      if (label) label.innerHTML = `${this.t('bg_brightness')}<span id="brightness-val">${sliderBrightness.value}%</span>`;
-    }
+      const valBrightness = document.getElementById('brightness-val');
+      const sliderBrightness = document.getElementById('setting-brightness');
+      if (valBrightness && sliderBrightness) {
+        const label = document.querySelector('[for="setting-brightness"]');
+        if (label) label.innerHTML = `${this.t('bg_brightness')}<span id="brightness-val">${sliderBrightness.value}%</span>`;
+      }
 
-    const valSceneBrightness = document.getElementById('scene-brightness-val');
-    const sliderSceneBrightness = document.getElementById('setting-scene-brightness');
-    if (valSceneBrightness && sliderSceneBrightness) {
-      const label = document.querySelector('[for="setting-scene-brightness"]');
-      if (label) label.innerHTML = `${this.t('artwork_brightness')}<span id="scene-brightness-val">${(sliderSceneBrightness.value / 10.0).toFixed(1)}x</span>`;
-    }
+      const valSceneBrightness = document.getElementById('scene-brightness-val');
+      const sliderSceneBrightness = document.getElementById('setting-scene-brightness');
+      if (valSceneBrightness && sliderSceneBrightness) {
+        const label = document.querySelector('[for="setting-scene-brightness"]');
+        if (label) label.innerHTML = `${this.t('artwork_brightness')}<span id="scene-brightness-val">${(sliderSceneBrightness.value / 10.0).toFixed(1)}x</span>`;
+      }
 
-    const valSpeed = document.getElementById('speed-val');
-    const sliderSpeed = document.getElementById('setting-speed');
-    if (valSpeed && sliderSpeed) {
-      const label = document.querySelector('[for="setting-speed"]');
-      if (label) label.innerHTML = `${this.t('particle_speed')}<span id="speed-val">${(sliderSpeed.value / 100.0).toFixed(1)}x</span>`;
-    }
+      const valSpeed = document.getElementById('speed-val');
+      const sliderSpeed = document.getElementById('setting-speed');
+      if (valSpeed && sliderSpeed) {
+        const label = document.querySelector('[for="setting-speed"]');
+        if (label) label.innerHTML = `${this.t('particle_speed')}<span id="speed-val">${(sliderSpeed.value / 100.0).toFixed(1)}x</span>`;
+      }
 
-    const valBounce = document.getElementById('bounce-val');
-    const sliderBounce = document.getElementById('setting-bounce');
-    if (valBounce && sliderBounce) {
-      const label = document.querySelector('[for="setting-bounce"]');
-      if (label) label.innerHTML = `${this.t('particle_bounce')}<span id="bounce-val">${(sliderBounce.value / 100.0).toFixed(1)}x</span>`;
+      const valBounce = document.getElementById('bounce-val');
+      const sliderBounce = document.getElementById('setting-bounce');
+      if (valBounce && sliderBounce) {
+        const label = document.querySelector('[for="setting-bounce"]');
+        if (label) label.innerHTML = `${this.t('particle_bounce')}<span id="bounce-val">${(sliderBounce.value / 100.0).toFixed(1)}x</span>`;
+      }
+    } catch (e) {
+      console.error("LanguageManager: Error updating DOM:", e);
     }
   }
 }
