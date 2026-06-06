@@ -76,18 +76,6 @@ class AudioEngine {
     window.addEventListener('languagechanged', () => {
       this.updateStatusUI();
     });
-  }
-
-  updateStatusUI() {
-    const audioStatus = document.getElementById('audio-status');
-    if (audioStatus) {
-      if (this.isPlaying) {
-        audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">${lang.t('playing')}</span>`;
-      } else {
-        audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">${lang.t('paused')}</span>`;
-      }
-    }
-  }
     const defaultTracks = [
       {
         id: "green_light",
@@ -477,6 +465,17 @@ class AudioEngine {
     this.chords = this.chordsByTrack[0] || [[[110.00, 130.81, 164.81, 196.00], [87.31, 110.00, 130.81, 164.81]]];
     this.chordIndex = 0;
     this.stepIndex = 0;
+  }
+
+  updateStatusUI() {
+    const audioStatus = document.getElementById('audio-status');
+    if (audioStatus) {
+      if (this.isPlaying) {
+        audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">${lang.t('playing')}</span>`;
+      } else {
+        audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">${lang.t('paused')}</span>`;
+      }
+    }
   }
 
   saveTracksToLocalStorage() {
