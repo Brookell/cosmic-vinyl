@@ -1033,7 +1033,14 @@ class App {
     });
 
     // HUD controls buttons
-    document.getElementById('btn-play').addEventListener('click', () => audio.togglePlay());
+    document.getElementById('btn-play').addEventListener('click', () => {
+      if (audio.currentTrackIndex !== this.focusedIndex) {
+        this.updatePlayingTrackUI(this.focusedIndex);
+        audio.play();
+      } else {
+        audio.togglePlay();
+      }
+    });
     document.getElementById('btn-next').addEventListener('click', () => this.rotateCarousel(1));
     document.getElementById('btn-prev').addEventListener('click', () => this.rotateCarousel(-1));
     

@@ -114,69 +114,77 @@ body {
   text-shadow: none;
 }
 
-.library-toggle-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 5px 12px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.library-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.library-toggle-btn svg {
-  color: var(--text-secondary);
-  transition: color 0.2s ease;
-}
-
-.library-toggle-btn:hover svg {
-  color: var(--text-primary);
-}
-
+.library-toggle-btn,
 .view-toggle-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  border-radius: 14px;
   color: var(--text-secondary);
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
-  padding: 5px 12px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  /* Collapsed circular shape by default */
+  height: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  padding: 0;
   margin-left: 8px;
 }
 
+.library-toggle-btn {
+  margin-left: 0; /* Library button is the first item, no left margin */
+}
+
+.library-toggle-btn:hover,
 .view-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.09);
   color: var(--text-primary);
   border-color: rgba(255, 255, 255, 0.18);
+  
+  /* Expanded pill shape on hover */
+  max-width: 140px;
+  padding: 0 12px;
 }
 
+.library-toggle-btn svg,
 .view-toggle-btn svg {
   color: var(--text-secondary);
   transition: color 0.2s ease;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
+.library-toggle-btn:hover svg,
 .view-toggle-btn:hover svg {
   color: var(--text-primary);
+}
+
+.library-toggle-btn span,
+.view-toggle-btn span {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  display: inline-block;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, max-width 0.35s ease, margin 0.35s ease;
+  margin-left: 0;
+}
+
+.library-toggle-btn:hover span,
+.view-toggle-btn:hover span {
+  opacity: 1;
+  max-width: 100px;
+  margin-left: 6px;
 }
 
 /* Control Mode Selector in Header */
@@ -186,10 +194,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 2px;
-  gap: 2px;
+  gap: 4px;
   margin-left: 8px;
   height: 28px;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .mode-toggle-btn {
@@ -199,35 +208,63 @@ body {
   font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 16px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  height: 22px;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  /* Collapsed circular shape by default */
+  height: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  border-radius: 11px;
+  padding: 0;
 }
 
 .mode-toggle-btn:hover {
   color: var(--text-primary);
+  max-width: 120px;
+  padding: 0 10px;
 }
 
 .mode-toggle-btn.active {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* The active button is circular as well, until hovered */
 }
 
 .mode-toggle-btn svg {
   color: var(--text-secondary);
   transition: color 0.2s ease;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .mode-toggle-btn:hover svg,
 .mode-toggle-btn.active svg {
   color: var(--text-primary);
+}
+
+.mode-toggle-btn span {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  display: inline-block;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, max-width 0.35s ease, margin 0.35s ease;
+  margin-left: 0;
+}
+
+.mode-toggle-btn:hover span {
+  opacity: 1;
+  max-width: 100px;
+  margin-left: 4px;
 }
 
 .system-status {
