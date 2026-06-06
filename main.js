@@ -93,36 +93,60 @@ class App {
   // Start the application setup
   init() {
     lang.updateDOM();
-    this.setupThree();
-    this.createStarfield();
-    this.createCarousel();
-    this.setupLights();
-    this.bindEvents();
     
-    // Run loop
-    this.animate();
+    // Bind UI events first so they remain interactive even if WebGL fails
+    try {
+      this.bindEvents();
+    } catch (e) {
+      console.error("Error binding UI events:", e);
+    }
+
+    try {
+      this.setupThree();
+      this.createStarfield();
+      this.createCarousel();
+      this.setupLights();
+      // Run loop
+      this.animate();
+    } catch (e) {
+      console.error("WebGL/Three.js initialization failed:", e);
+      const canvas3d = document.getElementById('canvas3d');
+      if (canvas3d) canvas3d.style.display = 'none';
+    }
 
     // Initialize bottom player HUD with first track
-    this.updatePlayingTrackUI(0);
+    try {
+      this.updatePlayingTrackUI(0);
+    } catch (e) {
+      console.error("Error updating playing track UI:", e);
+    }
 
     // Re-draw canvas covers once elegant google fonts finish loading
     document.fonts.ready.then(() => {
-      console.log("Artistic Google Fonts loaded. Re-generating album covers...");
-      this.albumGroups.forEach((item) => {
-        const track = audio.tracks[item.index];
-        // Only regenerate if the cover has not been replaced by an online search
-        if (this.albumCanvasTextures[item.index] && this.albumCanvasTextures[item.index].isProcedural) {
-          const texture = this.generateAlbumTexture(item.index, track);
-          
-          item.sleeve.material[4].map = texture;
-          item.sleeve.material[4].needsUpdate = true;
-          
-          const vinylTexture = this.generateVinylTexture(texture);
-          item.vinyl.material[1].map = vinylTexture;
-          item.vinyl.material[1].needsUpdate = true;
-        }
-      });
-      this.updateHUDTrackDetails(this.focusedIndex);
+      try {
+        console.log("Artistic Google Fonts loaded. Re-generating album covers...");
+        this.albumGroups.forEach((item) => {
+          const track = audio.tracks[item.index];
+          // Only regenerate if the cover has not been replaced by an online search
+          if (this.albumCanvasTextures[item.index] && this.albumCanvasTextures[item.index].isProcedural) {
+            const texture = this.generateAlbumTexture(item.index, track);
+            
+            if (item.sleeve && item.sleeve.material) {
+              item.sleeve.material[4].map = texture;
+              item.sleeve.material[4].needsUpdate = true;
+            }
+            
+            if (item.vinyl && item.vinyl.material) {
+              const vinylTexture = this.generateVinylTexture(texture);
+              item.vinyl.material[1].map = vinylTexture;
+              item.vinyl.material[1].needsUpdate = true;
+            }
+          }
+        });
+        this.updateHUDTrackDetails(this.focusedIndex);
+      } catch (e) {
+        console.warn("Could not regenerate album covers:", e);
+      }
     });
   }
 
@@ -1529,9 +1553,13 @@ class App {
 
   // Handle window resizing
   onWindowResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    if (this.camera) {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+    }
+    if (this.renderer) {
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   onPointerDown(e) {
