@@ -101,6 +101,7 @@ class GestureController {
       });
       
       this.video.srcObject = stream;
+      this.video.play().catch(err => console.warn("Video play failed:", err));
       this.isCameraActive = true;
       document.getElementById('cam-warning').classList.add('hidden');
       
