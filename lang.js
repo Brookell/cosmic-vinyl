@@ -48,7 +48,7 @@ const translations = {
     artwork_brightness: "Artwork Brightness: ",
     particle_speed: "Particle Speed: ",
     particle_bounce: "Particle Bounce: ",
-    replay_tutorial: "📖 Replay Gesture Guide",
+    replay_tutorial: "Replay Gesture Guide",
     gesture_preview: "GESTURE PREVIEW",
     toggle_webcam: "Toggle Webcam Overlay",
     camera_off: "Camera Off",
@@ -126,7 +126,7 @@ const translations = {
     artwork_brightness: "专辑亮度：",
     particle_speed: "粒子速度：",
     particle_bounce: "粒子跳动：",
-    replay_tutorial: "📖 重新查看新手引导",
+    replay_tutorial: "重新查看新手引导",
     gesture_preview: "手势预览",
     toggle_webcam: "切换摄像头画面",
     camera_off: "摄像头已关闭",
@@ -211,6 +211,10 @@ class LanguageManager {
     const langBtnText = document.getElementById('lang-toggle-text');
     if (langBtnText) {
       langBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
+    }
+    const onboardingLangBtnText = document.getElementById('lang-toggle-onboarding-text');
+    if (onboardingLangBtnText) {
+      onboardingLangBtnText.textContent = this.currentLang === 'en' ? 'EN' : '中文';
     }
 
     // 5. Update slider label prefixes dynamically (we'll also let main.js handle slider values updates on language switch)

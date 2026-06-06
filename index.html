@@ -351,7 +351,7 @@
           <input type="range" id="setting-bounce" min="0" max="250" step="10" value="100">
         </div>
         <div class="settings-group" style="margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 15px; margin-bottom: 0;">
-          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);" data-i18n="replay_tutorial">📖 Replay Gesture Guide</button>
+          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);" data-i18n="replay_tutorial">Replay Gesture Guide</button>
         </div>
     </div>
     </div>
@@ -376,6 +376,14 @@
   <div id="onboarding" class="overlay animate-fade-in">
     <div class="onboarding-card glass" id="onboarding-card">
       
+      <!-- Language Switcher in onboarding -->
+      <button id="btn-onboarding-lang" class="skip-btn" style="left: 24px; right: auto; display: flex; align-items: center; gap: 4px;" title="Toggle Language / 切换语言">
+        <svg viewBox="0 0 24 24" width="12" height="12" style="vertical-align: middle;">
+          <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.39 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.39-1.63-4.33-3.56zm2.95-8H5.08c.94-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.66.07-1.34.16-2h4.68c.09.66.16 1.34.16 2 0 .66-.07 1.34-.16 2zm.28 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.94 1.93-2.49 3.14-4.33 3.56zm1.76-5.56c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+        </svg>
+        <span id="lang-toggle-onboarding-text">EN</span>
+      </button>
+
       <!-- Skip Tutorial button -->
       <button id="btn-skip-tutorial" class="skip-btn hidden" data-i18n="skip_guide">SKIP GUIDE</button>
 
@@ -391,10 +399,10 @@
         </div>
         <div class="onboarding-mode-selection">
           <button id="btn-choose-gesture" class="start-btn">
-            <span class="btn-icon">✨</span><span style="vertical-align: middle;" data-i18n="enable_camera_gestures">ENABLE CAMERA GESTURES</span>
+            <span style="vertical-align: middle;" data-i18n="enable_camera_gestures">ENABLE CAMERA GESTURES</span>
           </button>
           <button id="btn-choose-mouse" class="start-btn secondary">
-            <span class="btn-icon">🖱️</span><span style="vertical-align: middle;" data-i18n="browse_with_mouse">BROWSE WITH MOUSE & KEYS</span>
+            <span style="vertical-align: middle;" data-i18n="browse_with_mouse">BROWSE WITH MOUSE & KEYS</span>
           </button>
         </div>
       </div>

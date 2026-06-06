@@ -1067,6 +1067,13 @@ class App {
       });
     }
 
+    const btnOnboardingLang = document.getElementById('btn-onboarding-lang');
+    if (btnOnboardingLang) {
+      btnOnboardingLang.addEventListener('click', () => {
+        lang.toggleLanguage();
+      });
+    }
+
     window.addEventListener('languagechanged', () => {
       const textSpan = document.getElementById('view-toggle-text');
       if (textSpan) {
