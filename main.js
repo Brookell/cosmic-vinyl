@@ -86,7 +86,7 @@ class App {
     this.activeFilter = 'all';
     
     // Visual settings
-    this.sceneBrightness = 1.2;
+    this.sceneBrightness = 2.5;
   }
 
   // Start the application setup
