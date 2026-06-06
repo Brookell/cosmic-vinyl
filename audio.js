@@ -1,4 +1,5 @@
 // Audio engine handling Web Audio API, MP3 loading, and the built-in ambient synthesizer.
+import { lang } from './lang.js';
 
 // Simple IndexedDB wrapper for storing custom audio files
 const dbPromise = new Promise((resolve, reject) => {
@@ -71,8 +72,22 @@ class AudioEngine {
     this.synthOscillators = [];
     this.synthFilter = null;
     this.synthLfo = null;
-    
-    // Default tracks metadata pre-fetched from iTunes API with 500x500 artwork URLs
+    // Listen to language changes
+    window.addEventListener('languagechanged', () => {
+      this.updateStatusUI();
+    });
+  }
+
+  updateStatusUI() {
+    const audioStatus = document.getElementById('audio-status');
+    if (audioStatus) {
+      if (this.isPlaying) {
+        audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">${lang.t('playing')}</span>`;
+      } else {
+        audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">${lang.t('paused')}</span>`;
+      }
+    }
+  }
     const defaultTracks = [
       {
         id: "green_light",
@@ -580,13 +595,10 @@ class AudioEngine {
     // Update UI play state
     const iconPlay = document.getElementById('icon-play');
     const iconPause = document.getElementById('icon-pause');
-    const audioStatus = document.getElementById('audio-status');
     
     if (iconPlay) iconPlay.classList.add('hidden');
     if (iconPause) iconPause.classList.remove('hidden');
-    if (audioStatus) {
-      audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">Playing</span>`;
-    }
+    this.updateStatusUI();
   }
 
   // Pause audio
@@ -604,13 +616,10 @@ class AudioEngine {
     // Update UI pause state
     const iconPlay = document.getElementById('icon-play');
     const iconPause = document.getElementById('icon-pause');
-    const audioStatus = document.getElementById('audio-status');
     
     if (iconPlay) iconPlay.classList.remove('hidden');
     if (iconPause) iconPause.classList.add('hidden');
-    if (audioStatus) {
-      audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">Paused</span>`;
-    }
+    this.updateStatusUI();
   }
 
   togglePlay() {

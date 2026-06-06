@@ -40,38 +40,38 @@
     <header class="hud-header glass">
       <div class="logo">
         <h1>COSMIC VINYL</h1>
-        <button id="btn-toggle-library" class="library-toggle-btn" title="Toggle Sidebar">
+        <button id="btn-toggle-library" class="library-toggle-btn" title="Toggle Sidebar" data-i18n-title="toggle_library">
           <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle;">
             <path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
           </svg>
-          <span>Library</span>
+          <span data-i18n="library">Library</span>
         </button>
-        <button id="btn-toggle-view" class="view-toggle-btn" title="Switch View">
+        <button id="btn-toggle-view" class="view-toggle-btn" title="Switch View" data-i18n-title="switch_view">
           <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle;">
             <path fill="currentColor" d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
           </svg>
-          <span id="view-toggle-text">Grid View</span>
+          <span id="view-toggle-text" data-i18n="grid_view">Grid View</span>
         </button>
-        <button id="btn-header-tutorial" class="view-toggle-btn" title="Gesture Guide">
+        <button id="btn-header-tutorial" class="view-toggle-btn" title="Gesture Guide" data-i18n-title="gesture_guide_title">
           <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle;">
             <path fill="currentColor" d="M12 6c1.1-1.1 2.8-1.5 4.5-1.5 1.6 0 3.1.4 4.5 1.2v12.8c-1.4-.8-2.9-1.2-4.5-1.2-1.7 0-3.4.4-4.5 1.5V6zm-1 0c-1.1-1.1-2.8-1.5-4.5-1.5-1.6 0-3.1.4-4.5 1.2v12.8c1.4-.8 2.9-1.2 4.5-1.2 1.7 0 3.4.4 4.5 1.5V6z"/>
           </svg>
-          <span>Gesture Guide</span>
+          <span data-i18n="gesture_guide">Gesture Guide</span>
         </button>
-
+ 
         <!-- Control Mode Switcher -->
         <div class="control-mode-selector">
-          <button id="btn-mode-mouse" class="mode-toggle-btn active" title="Mouse Mode">
+          <button id="btn-mode-mouse" class="mode-toggle-btn active" title="Mouse Mode" data-i18n-title="mouse_mode_title">
             <svg viewBox="0 0 24 24" width="13" height="13" style="vertical-align: middle;">
               <path fill="currentColor" d="M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93M4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"/>
             </svg>
-            <span>Mouse Mode</span>
+            <span data-i18n="mouse_mode">Mouse Mode</span>
           </button>
-          <button id="btn-mode-gesture" class="mode-toggle-btn" title="Gesture Mode">
+          <button id="btn-mode-gesture" class="mode-toggle-btn" title="Gesture Mode" data-i18n-title="gesture_mode_title">
             <svg viewBox="0 0 24 24" width="13" height="13" style="vertical-align: middle;">
               <path fill="currentColor" d="M21 16v-2c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V5c0-1.7-1.3-3-3-3h-2c-1.1 0-2 .9-2 2v1H9V3c0-1.7-1.3-3-3-3H4C2.3 0 1 1.3 1 3v8c0 2.2 1.8 4 4 4h1v5c0 1.7 1.3 3 3 3h8c2.2 0 4-1.8 4-4z"/>
             </svg>
-            <span>Gesture Mode</span>
+            <span data-i18n="gesture_mode">Gesture Mode</span>
           </button>
         </div>
       </div>
@@ -82,19 +82,26 @@
           <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16">
             <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
-          <input type="text" id="search-input" placeholder="What do you want to play?" autocomplete="off">
+          <input type="text" id="search-input" placeholder="What do you want to play?" data-i18n-placeholder="search_placeholder" autocomplete="off">
         </div>
         <div id="search-results" class="search-results-dropdown glass hidden"></div>
       </div>
-
+ 
       <div class="system-status">
+        <!-- Language Switcher -->
+        <button id="btn-toggle-lang" class="view-toggle-btn" title="Toggle Language / 切换语言" style="margin-left: 0;">
+          <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle;">
+            <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.39 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.39-1.63-4.33-3.56zm2.95-8H5.08c.94-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.66.07-1.34.16-2h4.68c.09.66.16 1.34.16 2 0 .66-.07 1.34-.16 2zm.28 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.94 1.93-2.49 3.14-4.33 3.56zm1.76-5.56c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+          </svg>
+          <span id="lang-toggle-text">EN</span>
+        </button>
         <div class="status-indicator" id="mp-status">
           <span class="dot yellow"></span>
-          <span class="status-text">Initializing gestures...</span>
+          <span class="status-text" data-i18n="init_gestures">Initializing gestures...</span>
         </div>
         <div class="status-indicator" id="audio-status">
           <span class="dot gray"></span>
-          <span class="status-text">Audio ready</span>
+          <span class="status-text" data-i18n="audio_ready">Audio ready</span>
         </div>
       </div>
     </header>
@@ -107,17 +114,17 @@
             <svg viewBox="0 0 24 24" width="18" height="18" class="lib-icon">
               <path fill="currentColor" d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
             </svg>
-            <span>Your Library</span>
+            <span data-i18n="your_library">Your Library</span>
           </div>
           <div class="library-actions">
             <!-- Add song button -->
-            <button id="btn-add-song" class="sidebar-action-btn" title="Add Custom Song">
+            <button id="btn-add-song" class="sidebar-action-btn" title="Add Custom Song" data-i18n-title="add_custom_song">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
             </button>
             <!-- Collapse button -->
-            <button id="btn-close-library" class="sidebar-action-btn" title="Collapse Library">
+            <button id="btn-close-library" class="sidebar-action-btn" title="Collapse Library" data-i18n-title="collapse_library">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
               </svg>
@@ -127,16 +134,16 @@
         
         <!-- Spotify-style chips/filters -->
         <div class="filter-chips">
-          <button class="chip active" data-filter="all">All</button>
-          <button class="chip" data-filter="gestures">Gestures</button>
+          <button class="chip active" data-filter="all" data-i18n="all">All</button>
+          <button class="chip" data-filter="gestures" data-i18n="gestures">Gestures</button>
         </div>
       </div>
 
       <!-- Add Song Search & Custom Form Panel inside Sidebar -->
       <div id="add-song-container" class="add-song-panel hidden">
         <div class="panel-mode-selector">
-          <button id="btn-mode-search" class="mode-btn active" type="button">Search Online</button>
-          <button id="btn-mode-manual" class="mode-btn" type="button">Custom Manual</button>
+          <button id="btn-mode-search" class="mode-btn active" type="button" data-i18n="search_online">Search Online</button>
+          <button id="btn-mode-manual" class="mode-btn" type="button" data-i18n="custom_manual">Custom Manual</button>
         </div>
         
         <!-- Mode 1: Search Online -->
@@ -145,7 +152,7 @@
             <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14">
               <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
-            <input type="text" id="sidebar-song-search" placeholder="Search songs..." autocomplete="off">
+            <input type="text" id="sidebar-song-search" placeholder="Search songs..." data-i18n-placeholder="search_songs" autocomplete="off">
           </div>
           <div id="sidebar-search-results" class="sidebar-search-results-list"></div>
         </div>
@@ -154,17 +161,17 @@
         <div id="mode-manual-container" class="mode-container hidden">
           <form id="add-song-form" onsubmit="event.preventDefault();">
             <div class="form-group" style="margin-bottom: 6px;">
-              <input type="text" id="custom-song-title" placeholder="Song Title" required autocomplete="off">
+              <input type="text" id="custom-song-title" placeholder="Song Title" data-i18n-placeholder="song_title" required autocomplete="off">
             </div>
             <div class="form-group" style="margin-bottom: 8px;">
-              <input type="text" id="custom-song-artist" placeholder="Artist Name" required autocomplete="off">
+              <input type="text" id="custom-song-artist" placeholder="Artist Name" data-i18n-placeholder="artist_name" required autocomplete="off">
             </div>
-            <button type="submit" class="form-submit-btn" style="width: 100%;">Add to Gallery</button>
+            <button type="submit" class="form-submit-btn" style="width: 100%;" data-i18n="add_to_gallery">Add to Gallery</button>
           </form>
         </div>
 
         <div class="panel-footer-actions" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; display: flex; justify-content: flex-end;">
-          <button type="button" id="btn-cancel-add" class="form-cancel-btn" style="padding: 4px 10px; font-size: 10px;">Close Panel</button>
+          <button type="button" id="btn-cancel-add" class="form-cancel-btn" style="padding: 4px 10px; font-size: 10px;" data-i18n="close_panel">Close Panel</button>
         </div>
       </div>
 
@@ -185,8 +192,8 @@
                 </svg>
               </div>
               <div class="gesture-info">
-                <h3>OPEN PALM</h3>
-                <p>Fast slide left/right to view albums</p>
+                <h3 data-i18n="open_palm">OPEN PALM</h3>
+                <p data-i18n="open_palm_desc">Fast slide left/right to view albums</p>
               </div>
             </div>
 
@@ -197,8 +204,8 @@
                 </svg>
               </div>
               <div class="gesture-info">
-                <h3>DIGIT ONE</h3>
-                <p>Slow slide left/right to view albums</p>
+                <h3 data-i18n="digit_one">DIGIT ONE</h3>
+                <p data-i18n="digit_one_desc">Slow slide left/right to view albums</p>
               </div>
             </div>
 
@@ -209,8 +216,8 @@
                 </svg>
               </div>
               <div class="gesture-info">
-                <h3>MAKE A FIST</h3>
-                <p>Zoom current album (Hold still 3s to play)</p>
+                <h3 data-i18n="make_fist">MAKE A FIST</h3>
+                <p data-i18n="make_fist_desc">Zoom current album (Hold still 3s to play)</p>
               </div>
             </div>
           </div>
@@ -223,7 +230,7 @@
       <div class="banner-content">
         <div class="banner-art" id="banner-art-preview"></div>
         <div class="banner-text">
-          <span class="banner-subtitle">ALBUM</span>
+          <span class="banner-subtitle" data-i18n="album">ALBUM</span>
           <h2 class="banner-title" id="banner-title-text">Reckoner</h2>
           <div class="banner-metadata">
             <span class="banner-artist" id="banner-artist-text">Radiohead</span>
@@ -234,7 +241,7 @@
       </div>
       
       <div class="banner-actions">
-        <button id="btn-banner-play" class="btn-spotify-green" title="Toggle Play">
+        <button id="btn-banner-play" class="btn-spotify-green" title="Toggle Play" data-i18n-title="toggle_play">
           <!-- Play state icon -->
           <svg class="icon-play-svg" viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
           <!-- Pause state icon -->
@@ -250,9 +257,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
         </button>
       </div>
-    </div>
-
-    <!-- Bottom Controls Panel (Spotify Player Style) -->
+      <!-- Bottom Controls Panel (Spotify Player Style) -->
     <footer class="hud-player glass">
       <!-- Music Info -->
       <div class="player-info">
@@ -262,32 +267,32 @@
           <div class="track-artist" id="track-artist">Radiohead</div>
         </div>
         <!-- Spotify Green Checked badge -->
-        <span class="checked-badge-container" title="Saved to Library">
+        <span class="checked-badge-container" title="Saved to Library" data-i18n-title="save_to_library">
           <svg class="spotify-green-text checked-badge" viewBox="0 0 24 24" width="16" height="16">
             <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
           </svg>
         </span>
       </div>
-
+ 
       <!-- Playback Controls -->
       <div class="player-controls">
         <div class="control-buttons">
-          <button class="control-btn-secondary" title="Shuffle">
+          <button class="control-btn-secondary" title="Shuffle" data-i18n-title="shuffle">
             <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 18 7.41V10h2V4h-5.5zm1.91 10.09l-1.41 1.41 3.1 3.1H16v2h5v-5h-2v2.58l-2.59-2.59z"/></svg>
           </button>
-          <button id="btn-prev" class="control-btn" title="Previous (Swipe Left)">
+          <button id="btn-prev" class="control-btn" title="Previous (Swipe Left)" data-i18n-title="prev_title">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
           </button>
-          <button id="btn-play" class="control-btn play-pause-btn play-btn-white-circle" title="Toggle Play (Open Hand/Fist)">
+          <button id="btn-play" class="control-btn play-pause-btn play-btn-white-circle" title="Toggle Play (Open Hand/Fist)" data-i18n-title="play_title">
             <!-- Play state icon -->
             <svg id="icon-play" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
             <!-- Pause state icon (hidden by default) -->
             <svg id="icon-pause" viewBox="0 0 24 24" width="20" height="20" class="hidden"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
           </button>
-          <button id="btn-next" class="control-btn" title="Next (Swipe Right)">
+          <button id="btn-next" class="control-btn" title="Next (Swipe Right)" data-i18n-title="next_title">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 18l8.5-6L6 6zm9-12v12h2V6z"/></svg>
           </button>
-          <button class="control-btn-secondary" title="Repeat">
+          <button class="control-btn-secondary" title="Repeat" data-i18n-title="repeat">
             <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
           </button>
         </div>
@@ -299,12 +304,12 @@
           <span class="time-label" id="duration-time">--:--</span>
         </div>
       </div>
-
+ 
       <!-- Audio Sources and File Inputs -->
       <div class="player-actions">
         <div class="source-selector">
           <label for="audio-upload" class="action-btn upload-btn">
-            <span>Upload MP3</span>
+            <span data-i18n="upload_mp3">Upload MP3</span>
             <input type="file" id="audio-upload" accept="audio/*">
           </label>
         </div>
@@ -315,16 +320,16 @@
         </div>
       </div>
     </footer>
-
+ 
     <!-- Settings Panel (Visual Customizer) -->
     <div id="settings-panel" class="glass collapsed">
-      <button id="btn-toggle-settings" class="settings-toggle-btn" title="Toggle Settings">
+      <button id="btn-toggle-settings" class="settings-toggle-btn" title="Toggle Settings" data-i18n-title="visual_settings">
         <svg viewBox="0 0 24 24" width="18" height="18">
           <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
         </svg>
       </button>
       <div class="settings-content">
-        <h3>VISUAL SETTINGS</h3>
+        <h3 data-i18n="visual_settings">VISUAL SETTINGS</h3>
         <div class="settings-group">
           <label for="setting-stars">Particles Count: <span id="stars-val">4000</span></label>
           <input type="range" id="setting-stars" min="1000" max="10000" step="500" value="4000">
@@ -346,14 +351,14 @@
           <input type="range" id="setting-bounce" min="0" max="250" step="10" value="100">
         </div>
         <div class="settings-group" style="margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 15px; margin-bottom: 0;">
-          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);">📖 Replay Gesture Guide</button>
+          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);" data-i18n="replay_tutorial">📖 Replay Gesture Guide</button>
         </div>
-      </div>
+    </div>
     </div>
     <div id="webcam-monitor" class="glass hidden">
       <div class="monitor-header">
-        <span class="title">GESTURE PREVIEW</span>
-        <button id="btn-toggle-cam" class="monitor-btn" title="Toggle Webcam Overlay">
+        <span class="title" data-i18n="gesture_preview">GESTURE PREVIEW</span>
+        <button id="btn-toggle-cam" class="monitor-btn" title="Toggle Webcam Overlay" data-i18n-title="toggle_webcam">
           <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
         </button>
       </div>
@@ -361,7 +366,7 @@
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="gesture-overlay"></canvas>
         <div class="no-cam-warning" id="cam-warning">
-          <span>Camera Off</span>
+          <span data-i18n="camera_off">Camera Off</span>
         </div>
       </div>
     </div>
@@ -372,56 +377,56 @@
     <div class="onboarding-card glass" id="onboarding-card">
       
       <!-- Skip Tutorial button -->
-      <button id="btn-skip-tutorial" class="skip-btn hidden">SKIP GUIDE</button>
+      <button id="btn-skip-tutorial" class="skip-btn hidden" data-i18n="skip_guide">SKIP GUIDE</button>
 
       <!-- Welcome Slide (Slide 0) -->
       <div class="onboarding-slide active" data-slide="0">
         <div class="onboarding-logo-area">
           <h2 class="title-main">COSMIC VINYL</h2>
-          <h3 class="subtitle-sub">3D AUDIO GALLERY</h3>
+          <h3 class="subtitle-sub" data-i18n="audio_gallery_sub">3D AUDIO GALLERY</h3>
         </div>
-        <div class="onboarding-desc">
+        <div class="onboarding-desc" data-i18n="welcome_desc">
           Welcome to Cosmic Vinyl! A 3D audio space controlled by hand gestures.<br>
           We recommend using a camera to experience finger-guided flying interactions.
         </div>
         <div class="onboarding-mode-selection">
           <button id="btn-choose-gesture" class="start-btn">
-            <span class="btn-icon">✨</span>ENABLE CAMERA GESTURES
+            <span class="btn-icon">✨</span><span style="vertical-align: middle;" data-i18n="enable_camera_gestures">ENABLE CAMERA GESTURES</span>
           </button>
           <button id="btn-choose-mouse" class="start-btn secondary">
-            <span class="btn-icon">🖱️</span>BROWSE WITH MOUSE & KEYS
+            <span class="btn-icon">🖱️</span><span style="vertical-align: middle;" data-i18n="browse_with_mouse">BROWSE WITH MOUSE & KEYS</span>
           </button>
         </div>
       </div>
 
       <!-- Slide 1: Browse (Open Palm & Slide) -->
       <div class="onboarding-slide" data-slide="1">
-        <h3 class="slide-title">Step 1: Open Palm & Slide</h3>
-        <p class="slide-text">
+        <h3 class="slide-title" data-i18n="slide1_title">Step 1: Open Palm & Slide</h3>
+        <p class="slide-text" data-i18n="slide1_text">
           <strong>Spread your fingers</strong> and wave your hand left or right in front of the camera to scroll and browse through the 3D vinyl gallery.
         </p>
       </div>
 
       <!-- Slide 2: Focus (Hover) -->
       <div class="onboarding-slide" data-slide="2">
-        <h3 class="slide-title">Step 2: Hover to Focus</h3>
-        <p class="slide-text">
+        <h3 class="slide-title" data-i18n="slide2_title">Step 2: Hover to Focus</h3>
+        <p class="slide-text" data-i18n="slide2_text">
           <strong>Keep your hand still</strong> on a specific record. It will zoom in closer and show you the song name and details.
         </p>
       </div>
 
       <!-- Slide 3: Play (Fist & Play) -->
       <div class="onboarding-slide" data-slide="3">
-        <h3 class="slide-title">Step 3: Make a Fist to Play</h3>
-        <p class="slide-text">
+        <h3 class="slide-title" data-i18n="slide3_title">Step 3: Make a Fist to Play</h3>
+        <p class="slide-text" data-i18n="slide3_text">
           Once focused, <strong>clench your hand into a fist and hold still for 2 seconds</strong>. Wait for the circular ring to load, and the record will fly into the turntable!
         </p>
       </div>
 
       <!-- Slide 4: Return (Open Palm to Return) -->
       <div class="onboarding-slide" data-slide="4">
-        <h3 class="slide-title">Step 4: Open Palm to Return</h3>
-        <p class="slide-text">
+        <h3 class="slide-title" data-i18n="slide4_title">Step 4: Open Palm to Return</h3>
+        <p class="slide-text" data-i18n="slide4_text">
           While music is playing, <strong>spread your fingers</strong> again to fly the record back to the wall and resume browsing other tracks.
         </p>
       </div>
@@ -443,7 +448,7 @@
       </div>
 
       <!-- Final Action button (hidden initially, shown on slide 4) -->
-      <button id="btn-start" class="start-btn hidden" style="width: 100%; margin: 10px 0 0 0;">START GESTURE MODE</button>
+      <button id="btn-start" class="start-btn hidden" style="width: 100%; margin: 10px 0 0 0;" data-i18n="start_gesture_mode">START GESTURE MODE</button>
 
     </div>
   </div>
@@ -454,7 +459,7 @@
       <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" fill="transparent" r="24" cx="30" cy="30"/>
       <circle class="progress-ring__circle" stroke="var(--accent-cyan)" stroke-width="2.5" fill="transparent" r="24" cx="30" cy="30"/>
     </svg>
-    <div class="loader-label">HOLD STILL TO PLAY</div>
+    <div class="loader-label" data-i18n="hold_still">HOLD STILL TO PLAY</div>
   </div>
 
   <!-- Core Javascript imports -->

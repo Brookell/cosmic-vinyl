@@ -1,4 +1,5 @@
 // MediaPipe Hands Gesture Controller
+import { lang } from './lang.js';
 
 class GestureController {
   constructor() {
@@ -35,6 +36,29 @@ class GestureController {
     this.fistStartTime = null;
     this.fistStartPos = null;
     this.fistPlayTriggered = false;
+
+    // Listen to language changes
+    window.addEventListener('languagechanged', () => {
+      this.updateStatusUI();
+    });
+  }
+
+  updateStatusUI() {
+    const statusText = this.isCameraActive ? lang.t('camera_active') : lang.t('mouse_mode_status');
+    const dotColor = this.isCameraActive ? 'green' : 'gray';
+    const mpStatus = document.getElementById('mp-status');
+    if (mpStatus) {
+      mpStatus.innerHTML = `<span class="dot ${dotColor}"></span><span class="status-text">${statusText}</span>`;
+    }
+    const camWarningSpan = document.getElementById('cam-warning')?.querySelector('span');
+    if (camWarningSpan) {
+      // If camera is active, we don't display warning, but if off, we translate it
+      if (!this.isCameraActive) {
+        // Find if it was blocked or off
+        const isBlocked = camWarningSpan.textContent === "Camera Blocked" || camWarningSpan.textContent === lang.t('camera_blocked');
+        camWarningSpan.textContent = isBlocked ? lang.t('camera_blocked') : lang.t('camera_off');
+      }
+    }
   }
 
   // Initialize MediaPipe Hands and set up overlay canvas
@@ -70,7 +94,7 @@ class GestureController {
     if (this.isCameraActive) return;
 
     try {
-      document.getElementById('mp-status').innerHTML = `<span class="dot yellow"></span><span class="status-text">Requesting camera...</span>`;
+      document.getElementById('mp-status').innerHTML = `<span class="dot yellow"></span><span class="status-text">${lang.t('camera_requesting')}</span>`;
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }
@@ -93,17 +117,17 @@ class GestureController {
         });
         this.camera.start();
         
-        document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">Camera active</span>`;
+        this.updateStatusUI();
       } else {
         // Fallback if Camera class is not loaded
         this.startRequestAnimationFrameLoop();
       }
     } catch (error) {
       console.error("Camera access denied or failed:", error);
-      document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
-      document.getElementById('cam-warning').classList.remove('hidden');
-      document.getElementById('cam-warning').querySelector('span').textContent = "Camera Blocked";
       this.isCameraActive = false;
+      this.updateStatusUI();
+      document.getElementById('cam-warning').classList.remove('hidden');
+      document.getElementById('cam-warning').querySelector('span').textContent = lang.t('camera_blocked');
       throw error;
     }
   }
@@ -120,9 +144,9 @@ class GestureController {
       tracks.forEach(track => track.stop());
       this.video.srcObject = null;
     }
-    document.getElementById('mp-status').innerHTML = `<span class="dot gray"></span><span class="status-text">Mouse mode</span>`;
+    this.updateStatusUI();
     document.getElementById('cam-warning').classList.remove('hidden');
-    document.getElementById('cam-warning').querySelector('span').textContent = "Camera Off";
+    document.getElementById('cam-warning').querySelector('span').textContent = lang.t('camera_off');
     
     // Clear canvas
     if (this.overlayCtx) {
@@ -142,7 +166,7 @@ class GestureController {
       requestAnimationFrame(process);
     };
     requestAnimationFrame(process);
-    document.getElementById('mp-status').innerHTML = `<span class="dot green"></span><span class="status-text">Camera active</span>`;
+    this.updateStatusUI();
   }
 
   // Process MediaPipe results

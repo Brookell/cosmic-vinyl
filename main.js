@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { audio } from './audio.js';
 import { gestures } from './gestures.js';
+import { lang } from './lang.js';
 
 // --- CONFIGURATION CONSTANTS ---
 let NUM_ALBUMS = audio.tracks.length;
@@ -91,6 +92,7 @@ class App {
 
   // Start the application setup
   init() {
+    lang.updateDOM();
     this.setupThree();
     this.createStarfield();
     this.createCarousel();
@@ -1051,10 +1053,38 @@ class App {
         this.activeView = this.activeView === 'carousel' ? 'grid' : 'carousel';
         const textSpan = document.getElementById('view-toggle-text');
         if (textSpan) {
-          textSpan.textContent = this.activeView === 'carousel' ? 'Grid View' : 'Carousel View';
+          textSpan.textContent = this.activeView === 'carousel' ? lang.t('grid_view') : lang.t('carousel_view');
+          textSpan.setAttribute('data-i18n', this.activeView === 'carousel' ? 'grid_view' : 'carousel_view');
         }
       });
     }
+
+    // Language Switcher Toggle
+    const btnToggleLang = document.getElementById('btn-toggle-lang');
+    if (btnToggleLang) {
+      btnToggleLang.addEventListener('click', () => {
+        lang.toggleLanguage();
+      });
+    }
+
+    window.addEventListener('languagechanged', () => {
+      const textSpan = document.getElementById('view-toggle-text');
+      if (textSpan) {
+        textSpan.textContent = this.activeView === 'carousel' ? lang.t('grid_view') : lang.t('carousel_view');
+        textSpan.setAttribute('data-i18n', this.activeView === 'carousel' ? 'grid_view' : 'carousel_view');
+      }
+      
+      const skipBtn = document.getElementById('btn-skip-tutorial');
+      if (skipBtn && !skipBtn.classList.contains('hidden')) {
+        skipBtn.textContent = this.isReplayingTutorial ? lang.t('close') : lang.t('skip_guide');
+        skipBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close' : 'skip_guide');
+      }
+      const startBtn = document.getElementById('btn-start');
+      if (startBtn && !startBtn.classList.contains('hidden')) {
+        startBtn.textContent = this.isReplayingTutorial ? lang.t('close_guide') : lang.t('start_gesture_mode');
+        startBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close_guide' : 'start_gesture_mode');
+      }
+    });
 
     // Header Tutorial button Action
     const headerTutorial = document.getElementById('btn-header-tutorial');
@@ -1821,7 +1851,8 @@ class App {
     } else {
       if (skipBtn) {
         skipBtn.classList.remove('hidden');
-        skipBtn.textContent = this.isReplayingTutorial ? "CLOSE" : "SKIP GUIDE";
+        skipBtn.textContent = this.isReplayingTutorial ? lang.t('close') : lang.t('skip_guide');
+        skipBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close' : 'skip_guide');
       }
       if (navBar) navBar.classList.remove('hidden');
       
@@ -1844,7 +1875,8 @@ class App {
       if (slideIndex === 4) {
         if (startBtn) {
           startBtn.classList.remove('hidden');
-          startBtn.textContent = this.isReplayingTutorial ? "CLOSE GUIDE" : "START GESTURE MODE";
+          startBtn.textContent = this.isReplayingTutorial ? lang.t('close_guide') : lang.t('start_gesture_mode');
+          startBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close_guide' : 'start_gesture_mode');
         }
         if (nextBtn) {
           nextBtn.classList.remove('highlight');
