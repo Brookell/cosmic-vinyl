@@ -386,6 +386,186 @@ class AudioEngine {
         iTunesQuery: "Don't Mind The Crane",
         previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8b/f1/c4/8bf1c4e5-af1d-f9cf-fbaf-f4d59ee7f56e/mzaf_12290682609628206320.plus.aac.p.m4a",
         artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/fb/2c/7d/fb2c7d94-905f-2674-3b42-2e1af2b4a63a/193017090925.jpg/500x500bb.jpg"
+      },
+      {
+        id: "night_blindness",
+        name: "Night Blindness",
+        artist: "Tanya Chua",
+        album: "Stranger",
+        duration: "0:45",
+        iTunesQuery: "Night Blindness Tanya Chua",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/20/cc/75/20cc75e1-c56f-f81f-b336-b729a9827808/mzaf_15452181410465906453.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/91/c9/2d/91c92d40-d88b-b2f8-6951-8b5950bd62a5/mzi.qgyehuzk.jpg/500x500bb.jpg"
+      },
+      {
+        id: "come_back_to_me",
+        name: "Come Back to Me",
+        artist: "Utada",
+        album: "Come Back to Me - Single",
+        duration: "0:45",
+        iTunesQuery: "Come Back to Me Utada",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/55/f5/52/55f55230-e0ce-9da3-6c28-50d03875ddac/mzaf_16768776365330926931.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/08/43/1f/08431f70-f76a-e654-ab2b-920347a3abba/00602517977426.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "take_root",
+        name: "take root",
+        artist: "puppiebelly",
+        album: "take root - Single",
+        duration: "0:45",
+        iTunesQuery: "take root puppiebelly",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1b/f3/af/1bf3afc1-9f4d-c099-7337-5ffa0e213137/mzaf_9764118644924281184.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f8/18/38/f8183810-7c37-4e7d-eb36-0e58ba5e9cf0/5026854132860.jpg/500x500bb.jpg"
+      },
+      {
+        id: "twelve_hours_no_rain",
+        name: "十二小時不下雨",
+        artist: "Sandy Lam",
+        album: "原來…",
+        duration: "0:45",
+        iTunesQuery: "十二小時不下雨 Sandy Lam",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/ae/6b/99/ae6b9960-43ef-8784-cdc1-d3934670f011/mzaf_5437515995389065787.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music1/v4/0e/57/30/0e5730f6-91bf-8e83-d46d-9adc68fca268/825646246649.jpg/500x500bb.jpg"
+      },
+      {
+        id: "birds_of_a_feather",
+        name: "BIRDS OF A FEATHER",
+        artist: "Billie Eilish",
+        album: "HIT ME HARD AND SOFT",
+        duration: "0:45",
+        iTunesQuery: "BIRDS OF A FEATHER Billie Eilish",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/34/31/d3/3431d34e-847f-5d66-df83-0bce688d997e/mzaf_18106743962423782018.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "we_fell_in_love_in_october",
+        name: "We Fell in Love in October",
+        artist: "girl in red",
+        album: "we fell in love in october / forget her - Single",
+        duration: "0:45",
+        iTunesQuery: "We Fell in Love in October girl in red",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9a/b8/7b/9ab87b47-d974-1ad9-74ac-cb4b13b1e5f6/mzaf_4557361008487214760.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/31/bd/f4/31bdf42e-33aa-7968-c345-d09428c14856/5054526166202.jpg/500x500bb.jpg"
+      },
+      {
+        id: "someday",
+        name: "Someday",
+        artist: "YELLOW",
+        album: "Someday - Single",
+        duration: "0:45",
+        iTunesQuery: "Someday YELLOW",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/7b/ba/0c/7bba0c20-4265-3d7c-5dbd-251ff618d39e/mzaf_7995496462753511491.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/e7/b7/77/e7b777be-6ddd-e6a8-cd98-dd4429e1411e/4710149675552.jpg/500x500bb.jpg"
+      },
+      {
+        id: "fruit_fly",
+        name: "Fruit Fly",
+        artist: "Leah Dou & The Black Skirts",
+        album: "Fruit Fly - Single",
+        duration: "0:45",
+        iTunesQuery: "Fruit Fly Leah Dou The Black Skirts",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/36/b7/db/36b7db6f-2f39-0d7b-b3d8-115323aacce6/mzaf_9230608407794381710.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/71/dd/78/71dd7881-a4e6-a18b-b0e2-c895c0ef5230/602772345145.jpg/500x500bb.jpg"
+      },
+      {
+        id: "acrophobia",
+        name: "Acrophobia",
+        artist: "Lala Hsu",
+        album: "Limit",
+        duration: "0:45",
+        iTunesQuery: "Acrophobia Lala Hsu",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/05/98/ba/0598baae-f825-7434-8c90-406a12e427d3/mzaf_10091417391764561186.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ba/78/13/ba781329-20e1-0245-e197-d8e6aff989cf/4000x4000.jpg/500x500bb.jpg"
+      },
+      {
+        id: "sara_perche_ti_amo",
+        name: "Sarà Perché Ti Amo",
+        artist: "Ricchi & Poveri",
+        album: "Nur das Beste: Ricchi e Poveri",
+        duration: "0:45",
+        iTunesQuery: "Sarà Perché Ti Amo Ricchi Poveri",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/07/22/8a/07228a06-d0ab-6072-eebe-0e00427bf9e6/mzaf_7976611826323167337.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music/c6/df/9d/mzi.ngbmjcuk.jpg/500x500bb.jpg"
+      },
+      {
+        id: "good_luck_babe",
+        name: "Good Luck, Babe!",
+        artist: "Chappell Roan",
+        album: "Good Luck, Babe! - Single",
+        duration: "0:45",
+        iTunesQuery: "Good Luck Babe Chappell Roan",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c3/6d/4f/c36d4f23-b87f-046d-7a0e-e3e05d180b2a/mzaf_17235999651335214399.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/29/a7/c4/29a7c478-351d-25eb-a116-3e68118cdab8/24UMGIM31246.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "the_subway",
+        name: "The Subway",
+        artist: "Chappell Roan",
+        album: "The Subway - Single",
+        duration: "0:45",
+        iTunesQuery: "The Subway Chappell Roan",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/99/30/63/993063c9-63b1-3ac4-b558-eb1561f3c7c1/mzaf_4724150376642718672.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/a3/34/ac/a334acc6-5983-27ac-851d-8f03e148a4ce/25UMGIM99609.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "xihuan_jimo",
+        name: "喜歡寂寞",
+        artist: "sodagreen",
+        album: "你在煩惱什麼",
+        duration: "0:45",
+        iTunesQuery: "喜歡寂寞 sodagreen",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/51/99/f7/5199f762-9f76-da71-5d87-610ca592cf44/mzaf_10337939930752934468.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/a3/60/f7/a360f736-b3db-4a53-577f-9d15640894cb/cover.jpg/500x500bb.jpg"
+      },
+      {
+        id: "bohemian_rhapsody",
+        name: "Bohemian Rhapsody",
+        artist: "Queen",
+        album: "Greatest Hits I, II & III: The Platinum Collection",
+        duration: "0:45",
+        iTunesQuery: "Bohemian Rhapsody Queen",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/8f/11/52/8f1152a9-fd5f-0021-f546-b97579c22ec3/mzaf_3962258993076347789.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/4d/08/2a/4d082a9e-7898-1aa1-a02f-339810058d9e/14DMGIM05632.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "stan_feat_dido",
+        name: "Stan (feat. Dido)",
+        artist: "Eminem",
+        album: "The Marshall Mathers LP",
+        duration: "0:45",
+        iTunesQuery: "Stan feat Dido Eminem Marshall Mathers",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c2/aa/ae/c2aaaea2-c5ef-a0ec-c30b-130874b7ff69/mzaf_15454681330126452032.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/ea/ac/03/eaac03e5-8e9d-847e-d5b9-af7dee6a970b/00606949063221.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "vampire",
+        name: "vampire",
+        artist: "Olivia Rodrigo",
+        album: "GUTS (spilled)",
+        duration: "0:45",
+        iTunesQuery: "vampire Olivia Rodrigo",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/83/09/5e/83095ea1-83bf-ecdc-3b75-358c350fca51/mzaf_15560849688086702972.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/08/9e/07/089e0799-b405-9e69-b648-e6a19df9879c/24UMGIM30485.rgb.jpg/500x500bb.jpg"
+      },
+      {
+        id: "nujue",
+        name: "女爵",
+        artist: "Naiwen Yang",
+        album: "Continuation",
+        duration: "0:45",
+        iTunesQuery: "女爵 Naiwen Yang",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/76/0c/c6/760cc65d-423f-409f-b419-cd5220a9e090/mzaf_4734405464303881638.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/97/55/97/9755972e-89f3-0399-48a6-f0abe8250261/1400x1400.jpg/500x500bb.jpg"
+      },
+      {
+        id: "the_loneliest",
+        name: "THE LONELIEST",
+        artist: "Måneskin",
+        album: "RUSH!",
+        duration: "0:45",
+        iTunesQuery: "THE LONELIEST Maneskin",
+        previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/db/90/30/db9030bc-3768-5f97-6083-1b00399279b6/mzaf_4086473907543233838.plus.aac.p.m4a",
+        artworkUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/05/45/56/05455684-1284-f596-7ef1-29cb01f4b3a4/196871349536.jpg/500x500bb.jpg"
       }
     ];
 

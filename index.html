@@ -135,6 +135,12 @@
             <span data-i18n="your_library">Your Library</span>
           </div>
           <div class="library-actions">
+            <!-- Clear all button -->
+            <button id="btn-clear-library" class="sidebar-action-btn" title="Clear Library" data-i18n-title="clear_all_songs" style="color: rgba(239, 68, 68, 0.75);">
+              <svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align: middle;">
+                <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+            </button>
             <!-- Add song button -->
             <button id="btn-add-song" class="sidebar-action-btn" title="Add Custom Song" data-i18n-title="add_custom_song">
               <svg viewBox="0 0 24 24" width="16" height="16">
@@ -372,20 +378,21 @@
           <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);" data-i18n="replay_tutorial">Replay Gesture Guide</button>
         </div>
     </div>
+  </div>
+</div>
+
+  <div id="webcam-monitor" class="glass hidden">
+    <div class="monitor-header">
+      <span class="title" data-i18n="gesture_preview">GESTURE PREVIEW</span>
+      <button id="btn-toggle-cam" class="monitor-btn" title="Toggle Webcam Overlay" data-i18n-title="toggle_webcam">
+        <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </button>
     </div>
-    <div id="webcam-monitor" class="glass hidden">
-      <div class="monitor-header">
-        <span class="title" data-i18n="gesture_preview">GESTURE PREVIEW</span>
-        <button id="btn-toggle-cam" class="monitor-btn" title="Toggle Webcam Overlay" data-i18n-title="toggle_webcam">
-          <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-        </button>
-      </div>
-      <div class="monitor-body">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="gesture-overlay"></canvas>
-        <div class="no-cam-warning" id="cam-warning">
-          <span data-i18n="camera_off">Camera Off</span>
-        </div>
+    <div class="monitor-body">
+      <video id="webcam" autoplay playsinline muted></video>
+      <canvas id="gesture-overlay"></canvas>
+      <div class="no-cam-warning" id="cam-warning">
+        <span data-i18n="camera_off">Camera Off</span>
       </div>
     </div>
   </div>
@@ -411,10 +418,24 @@
           <h2 class="title-main">COSMIC VINYL</h2>
           <h3 class="subtitle-sub" data-i18n="audio_gallery_sub">3D AUDIO GALLERY</h3>
         </div>
-        <div class="onboarding-desc" data-i18n="welcome_desc">
-          Welcome to Cosmic Vinyl! A 3D audio space controlled by hand gestures.<br>
-          We recommend using a camera to experience finger-guided flying interactions.
+        <div class="onboarding-desc" style="display: flex; flex-direction: column; gap: 8px; font-size: 11.5px; line-height: 1.6; color: var(--text-secondary);">
+          <div data-i18n="welcome_desc_line1">Welcome to Cosmic Vinyl!</div>
+          <div data-i18n="welcome_desc_line2">A 3D audio space controlled by hand gestures.</div>
+          <div data-i18n="welcome_desc_line3">We recommend using a camera to experience finger-guided flying interactions.</div>
         </div>
+        
+        <!-- Background Music Selector (Styled as a gorgeous 3D card) -->
+        <input type="checkbox" id="toggle-bg-music" checked style="display: none;">
+        <div class="music-toggle-card glass checked" id="toggle-bg-music-btn" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; border-radius: 14px; width: 100%; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 6px 20px rgba(0,240,255,0.02); margin: 15px 0;">
+          <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
+            <span style="font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-cyan);" data-i18n="bg_music_toggle">BACKGROUND MUSIC</span>
+            <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);" id="bg-music-status-text" data-i18n="enabled_yes">Yes</span>
+          </div>
+          <div class="custom-switch-track" style="width: 44px; height: 24px; background: rgba(255,255,255,0.08); border-radius: 12px; position: relative; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease;">
+            <div class="custom-switch-thumb" style="width: 18px; height: 18px; background: var(--accent-cyan); border-radius: 50%; position: absolute; top: 2px; left: 22px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 0 10px var(--accent-cyan);"></div>
+          </div>
+        </div>
+
         <div class="onboarding-mode-selection">
           <button id="btn-choose-gesture" class="start-btn">
             <span style="vertical-align: middle;" data-i18n="enable_camera_gestures">ENABLE CAMERA GESTURES</span>
@@ -477,6 +498,12 @@
       <button id="btn-start" class="start-btn hidden" style="width: 100%; margin: 10px 0 0 0;" data-i18n="start_gesture_mode">START GESTURE MODE</button>
 
     </div>
+  </div>
+
+  <!-- Centered Focused Track Info (Displays below the active 3D album card) -->
+  <div id="focused-track-info" class="focused-track-info">
+    <h2 class="focused-track-title" id="focused-track-title"></h2>
+    <h3 class="focused-track-artist" id="focused-track-artist"></h3>
   </div>
 
   <!-- Fist Loading Progress Overlay -->

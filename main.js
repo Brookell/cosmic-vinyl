@@ -88,11 +88,18 @@ class App {
     
     // Visual settings
     this.sceneBrightness = 2.5;
+
+    // Mouse long press tracking
+    this.mouseLongPressActive = false;
+    this.mouseLongPressStartTime = 0;
+    this.mouseLongPressTriggered = false;
+    this.onboardingMode = 'gesture'; // 'gesture' or 'mouse'
   }
 
   // Start the application setup
   init() {
     lang.updateDOM();
+    
     
     // Bind UI events first so they remain interactive even if WebGL fails
     try {
@@ -992,13 +999,15 @@ class App {
 
     if (btnChooseGesture) {
       btnChooseGesture.addEventListener('click', () => {
+        this.onboardingMode = 'gesture';
         this.showOnboardingSlide(1);
       });
     }
 
     if (btnChooseMouse) {
       btnChooseMouse.addEventListener('click', () => {
-        this.startExperience(false);
+        this.onboardingMode = 'mouse';
+        this.showOnboardingSlide(1);
       });
     }
 
@@ -1008,7 +1017,7 @@ class App {
           this.hideOnboarding();
           this.isReplayingTutorial = false;
         } else {
-          this.startExperience(true);
+          this.startExperience(this.onboardingMode === 'gesture');
         }
       });
     }
@@ -1028,7 +1037,7 @@ class App {
             this.hideOnboarding();
             this.isReplayingTutorial = false;
           } else {
-            this.startExperience(true);
+            this.startExperience(this.onboardingMode === 'gesture');
           }
         } else {
           this.showOnboardingSlide(this.currentOnboardingSlide + 1);
@@ -1042,7 +1051,30 @@ class App {
           this.hideOnboarding();
           this.isReplayingTutorial = false;
         } else {
-          this.startExperience(true);
+          this.startExperience(this.onboardingMode === 'gesture');
+        }
+      });
+    }
+
+    // Background Music Onboarding settings toggle (3D Card)
+    const toggleBgMusic = document.getElementById('toggle-bg-music');
+    const toggleBgMusicBtn = document.getElementById('toggle-bg-music-btn');
+    const statusText = document.getElementById('bg-music-status-text');
+    if (toggleBgMusicBtn && toggleBgMusic) {
+      toggleBgMusicBtn.addEventListener('click', () => {
+        toggleBgMusic.checked = !toggleBgMusic.checked;
+        if (toggleBgMusic.checked) {
+          toggleBgMusicBtn.classList.add('checked');
+          if (statusText) {
+            statusText.textContent = lang.t('enabled_yes');
+            statusText.setAttribute('data-i18n', 'enabled_yes');
+          }
+        } else {
+          toggleBgMusicBtn.classList.remove('checked');
+          if (statusText) {
+            statusText.textContent = lang.t('enabled_no');
+            statusText.setAttribute('data-i18n', 'enabled_no');
+          }
         }
       });
     }
@@ -1568,6 +1600,20 @@ class App {
     this.previousPointerY = e.clientY;
     this.dragStartRotation = this.targetRotation;
     this.dragDistance = 0;
+
+    if (this.isZoomed && this.albumGroups[this.focusedIndex]) {
+      this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      this.raycaster.setFromCamera(this.pointer, this.camera);
+      const targets = [this.albumGroups[this.focusedIndex].sleeve];
+      const intersects = this.raycaster.intersectObjects(targets);
+      if (intersects.length > 0) {
+        this.mouseLongPressActive = true;
+        this.mouseLongPressStartTime = Date.now();
+        this.mouseLongPressTriggered = false;
+        this.handleFistHoldProgress(0.01);
+      }
+    }
   }
 
   onPointerMove(e) {
@@ -1578,6 +1624,11 @@ class App {
     const deltaX = e.clientX - this.previousPointerX;
     const deltaY = e.clientY - this.previousPointerY;
     this.dragDistance += Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    if (this.mouseLongPressActive && this.dragDistance > 15) {
+      this.mouseLongPressActive = false;
+      this.handleFistHoldProgress(0);
+    }
     
     if (this.activeView === 'grid') {
       const COLS = 4;
@@ -1601,6 +1652,11 @@ class App {
 
   onPointerUp(e) {
     this.isDragging = false;
+    
+    if (this.mouseLongPressActive) {
+      this.mouseLongPressActive = false;
+      this.handleFistHoldProgress(0);
+    }
     
     // If the click was clean without dragging, Raycast to select
     if (this.dragDistance < 6) {
@@ -1763,6 +1819,12 @@ class App {
     if (bannerArtist) bannerArtist.textContent = track.artist;
     if (bannerDuration) bannerDuration.textContent = track.duration;
     
+    // Update focused track details below the 3D album card
+    const focusedTitle = document.getElementById('focused-track-title');
+    const focusedArtist = document.getElementById('focused-track-artist');
+    if (focusedTitle) focusedTitle.textContent = track.name;
+    if (focusedArtist) focusedArtist.textContent = track.artist;
+    
     // Highlight the active sidebar song item
     this.updateLibraryHighlight(index);
   }
@@ -1832,11 +1894,19 @@ class App {
   handleFistHoldProgress(progress) {
     const loader = document.getElementById('fist-loader');
     const ringCircle = loader ? loader.querySelector('.progress-ring__circle') : null;
+    const label = loader ? loader.querySelector('.loader-label') : null;
     
     if (!loader || !ringCircle) return;
     
     if (progress > 0) {
       loader.classList.add('visible');
+      if (label) {
+        if (this.mouseLongPressActive) {
+          label.textContent = lang.t('hold_to_play');
+        } else {
+          label.textContent = lang.t('hold_still');
+        }
+      }
       // SVG circumference is 150.8 (r=24)
       const offset = 150.8 * (1 - progress);
       ringCircle.style.strokeDashoffset = offset;
@@ -1857,8 +1927,39 @@ class App {
     }
   }
 
+  updateTutorialSlideText(slideIndex) {
+    if (slideIndex < 1 || slideIndex > 4) return;
+    
+    const slide = document.querySelector(`.onboarding-slide[data-slide="${slideIndex}"]`);
+    if (!slide) return;
+    
+    const titleEl = slide.querySelector('.slide-title');
+    const textEl = slide.querySelector('.slide-text');
+    
+    if (this.onboardingMode === 'mouse') {
+      if (titleEl) {
+        titleEl.setAttribute('data-i18n', `mouse_slide${slideIndex}_title`);
+        titleEl.innerHTML = lang.t(`mouse_slide${slideIndex}_title`);
+      }
+      if (textEl) {
+        textEl.setAttribute('data-i18n', `mouse_slide${slideIndex}_text`);
+        textEl.innerHTML = lang.t(`mouse_slide${slideIndex}_text`);
+      }
+    } else {
+      if (titleEl) {
+        titleEl.setAttribute('data-i18n', `slide${slideIndex}_title`);
+        titleEl.innerHTML = lang.t(`slide${slideIndex}_title`);
+      }
+      if (textEl) {
+        textEl.setAttribute('data-i18n', `slide${slideIndex}_text`);
+        textEl.innerHTML = lang.t(`slide${slideIndex}_text`);
+      }
+    }
+  }
+
   showOnboardingSlide(slideIndex) {
     this.currentOnboardingSlide = slideIndex;
+    this.updateTutorialSlideText(slideIndex);
     
     // Select all slides
     const slides = document.querySelectorAll('.onboarding-slide');
@@ -1910,8 +2011,9 @@ class App {
       if (slideIndex === 4) {
         if (startBtn) {
           startBtn.classList.remove('hidden');
-          startBtn.textContent = this.isReplayingTutorial ? lang.t('close_guide') : lang.t('start_gesture_mode');
-          startBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close_guide' : 'start_gesture_mode');
+          const startKey = this.isReplayingTutorial ? 'close_guide' : (this.onboardingMode === 'mouse' ? 'start_mouse_mode' : 'start_gesture_mode');
+          startBtn.textContent = lang.t(startKey);
+          startBtn.setAttribute('data-i18n', startKey);
         }
         if (nextBtn) {
           nextBtn.classList.remove('highlight');
@@ -1947,6 +2049,38 @@ class App {
       this.setControlMode('mouse');
     }
     
+    // Background music initialization based on welcome screen choices
+    const toggleBgMusic = document.getElementById('toggle-bg-music');
+    const birdsIndex = audio.tracks.findIndex(t => t.id === 'birds_of_a_feather');
+    const defaultPlayIndex = birdsIndex >= 0 ? birdsIndex : 0;
+    
+    if (toggleBgMusic && toggleBgMusic.checked) {
+      if (defaultPlayIndex >= 0 && defaultPlayIndex < audio.tracks.length) {
+        // Shift carousel to focus the selected album immediately
+        this.currentRotation = defaultPlayIndex;
+        this.targetRotation = defaultPlayIndex;
+        this.focusedIndex = defaultPlayIndex;
+        
+        // Auto-play selected track
+        this.updatePlayingTrackUI(defaultPlayIndex);
+        audio.play();
+      }
+    } else {
+      // If no bg music, we can still focus the default track, just don't play it
+      if (defaultPlayIndex >= 0 && defaultPlayIndex < audio.tracks.length) {
+        this.currentRotation = defaultPlayIndex;
+        this.targetRotation = defaultPlayIndex;
+        this.focusedIndex = defaultPlayIndex;
+        this.updateHUDTrackDetails(defaultPlayIndex);
+      }
+    }
+    
+    // Reveal the focused track info after carousel is positioned correctly
+    setTimeout(() => {
+      const trackInfoEl = document.getElementById('focused-track-info');
+      if (trackInfoEl) trackInfoEl.classList.add('visible');
+    }, 600);
+    
     // Load real iTunes preview URLs and artwork for default tracks
     audio.loadDefaultTrackData((index, track) => {
       // When iTunes data arrives for a track, load and apply the real artwork texture
@@ -1975,6 +2109,20 @@ class App {
 
     const delta = this.clock.getDelta();
     const time = this.clock.getElapsedTime();
+
+    // Update mouse long press if active
+    if (this.mouseLongPressActive) {
+      const elapsed = Date.now() - this.mouseLongPressStartTime;
+      const progress = Math.min(1.0, elapsed / 2000);
+      this.handleFistHoldProgress(progress);
+      
+      if (progress >= 1.0 && !this.mouseLongPressTriggered) {
+        this.mouseLongPressTriggered = true;
+        this.mouseLongPressActive = false;
+        this.handleGestureFistHoldStill();
+        this.handleFistHoldProgress(0);
+      }
+    }
     
     // 1. Fetch live audio analysis parameters
     const audioData = audio.getAnalysisData();
@@ -2010,6 +2158,13 @@ class App {
     // 4. Zoom Lerp progress interpolations
     const targetZoom = this.isZoomed ? 1.0 : 0.0;
     this.zoomProgress += (targetZoom - this.zoomProgress) * 0.1;
+
+    // Smoothly animate focused track info vertical position on zoom
+    const trackInfo = document.getElementById('focused-track-info');
+    if (trackInfo) {
+      const bottomVal = 165 - (165 - 112) * this.zoomProgress;
+      trackInfo.style.bottom = `${bottomVal}px`;
+    }
 
     // Smoothly interpolate vertical grid scroll position
     this.gridScrollY += (this.targetGridScrollY - this.gridScrollY) * 0.15;
@@ -2115,8 +2270,8 @@ class App {
         // Only make the vinyl visible when it starts sliding out
         item.vinyl.visible = this.zoomProgress > 0.01;
         
-        // Spin record when playing
-        if (audio.isPlaying && item.vinyl.visible) {
+        // Spin record when playing AND it is the currently active track
+        if (audio.isPlaying && item.vinyl.visible && audio.currentTrackIndex === item.index) {
           item.vinyl.rotation.y += VINYL_ROTATION_SPEED * delta;
         }
       } else {

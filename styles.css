@@ -2013,6 +2013,56 @@ body {
   transform: scale(1.1);
 }
 
+/* Centered Focused Track Info below 3D Album */
+.focused-track-info {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 165px; /* Sits perfectly below the 3D album card and above the player bar */
+  text-align: center;
+  z-index: 8;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: auto;
+  min-width: 320px;
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.3s ease;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.95);
+}
+
+.focused-track-info.visible {
+  opacity: 1;
+}
+
+.focused-track-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focused-track-artist {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Hide centered info during onboarding splash */
+.overlay:not(.hidden) ~ .focused-track-info {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
 /* Fist Loading Progress Overlay */
 .fist-loader-container {
   position: absolute;
@@ -2190,4 +2240,39 @@ body {
 .settings-group input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
+
+/* 3D Music Toggle Card Styles */
+.music-toggle-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.music-toggle-card:hover {
+  transform: translateY(-4px) scale(1.02) rotateX(4deg) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2), 0 0 20px rgba(56, 189, 248, 0.1) !important;
+}
+
+.music-toggle-card:active {
+  transform: translateY(0px) scale(0.99) rotateX(1deg) !important;
+}
+
+.music-toggle-card.checked .custom-switch-track {
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+.music-toggle-card.checked .custom-switch-thumb {
+  left: 22px !important;
+  background: var(--accent-cyan) !important;
+  box-shadow: 0 0 12px var(--accent-cyan) !important;
+}
+
+.music-toggle-card:not(.checked) .custom-switch-thumb {
+  left: 2px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
+}
+
 
