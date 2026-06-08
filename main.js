@@ -2615,6 +2615,7 @@ class App {
     const btnMouse = document.getElementById('btn-mode-mouse');
     const btnGesture = document.getElementById('btn-mode-gesture');
     const webcamMonitor = document.getElementById('webcam-monitor');
+    const mpStatus = document.getElementById('mp-status');
     
     if (!btnMouse || !btnGesture || !webcamMonitor) return;
     
@@ -2622,6 +2623,7 @@ class App {
       btnMouse.classList.add('active');
       btnGesture.classList.remove('active');
       webcamMonitor.classList.add('hidden');
+      if (mpStatus) mpStatus.classList.add('hidden');
       if (gestures.isCameraActive) {
         gestures.stopCamera();
       }
@@ -2629,6 +2631,7 @@ class App {
       btnGesture.classList.add('active');
       btnMouse.classList.remove('active');
       webcamMonitor.classList.remove('hidden');
+      if (mpStatus) mpStatus.classList.remove('hidden');
       if (!gestures.isCameraActive) {
         gestures.startCamera().catch(err => {
           console.warn("Webcam activation was bypassed/failed:", err);
