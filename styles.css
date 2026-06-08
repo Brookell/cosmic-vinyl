@@ -735,7 +735,7 @@ body {
 .onboarding-card {
   width: 100%;
   max-width: 440px;
-  padding: 36px;
+  padding: 64px 36px 36px 36px;
   text-align: center;
   display: flex;
   flex-direction: column;
