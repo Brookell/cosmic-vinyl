@@ -2062,6 +2062,7 @@ class App {
         this.currentRotation = defaultPlayIndex;
         this.targetRotation = defaultPlayIndex;
         this.focusedIndex = defaultPlayIndex;
+        this.updateHUDTrackDetails(defaultPlayIndex);
         
         // Auto-play selected track
         this.updatePlayingTrackUI(defaultPlayIndex);
