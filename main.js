@@ -246,6 +246,8 @@ class App {
 
   // Procedural Glowing Starfield Generator
   createStarfield() {
+    // Background particles disabled by user request
+    return;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(this.starsCount * 3);
     const colors = new Float32Array(this.starsCount * 3);
