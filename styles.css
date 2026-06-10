@@ -2354,12 +2354,13 @@ body {
     align-items: center;
     justify-content: flex-start;
     height: 54px;
-    padding: 0 16px;
-    gap: 12px;
+    padding: 0 12px;
+    gap: 8px;
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none; /* Firefox */
+    width: 100%;
   }
 
   .hud-header::-webkit-scrollbar {
@@ -2369,42 +2370,62 @@ body {
   .logo,
   .search-container,
   .system-status {
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
   }
 
   .logo {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .logo h1 {
-    font-size: 14px;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
 
   /* Compact button styling on mobile */
   .library-toggle-btn,
-  .view-toggle-btn,
+  .view-toggle-btn {
+    margin-left: 0;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  .library-toggle-btn span,
+  .view-toggle-btn span {
+    display: none !important;
+  }
+
   .control-mode-selector {
     margin-left: 0;
+    gap: 2px !important;
+    height: 26px !important;
+    padding: 1px !important;
   }
 
-  /* Disable hover pill expansion on touch inputs to avoid layout jumping */
-  .library-toggle-btn:hover,
-  .view-toggle-btn:hover {
-    max-width: 28px;
-    padding: 0;
+  .mode-toggle-btn {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
   }
 
-  .library-toggle-btn:hover span,
-  .view-toggle-btn:hover span {
+  .mode-toggle-btn span {
     display: none !important;
   }
 
   /* Inline Search Box in horizontal toolbar */
   .search-container {
-    width: 180px !important;
+    width: 140px !important;
   }
 
   #search-input {
@@ -2651,11 +2672,12 @@ body.device-mobile-sim .hud-header {
   align-items: center !important;
   justify-content: flex-start !important;
   height: 54px !important;
-  padding: 0 16px !important;
-  gap: 12px !important;
+  padding: 0 12px !important;
+  gap: 8px !important;
   overflow-x: auto !important;
   white-space: nowrap !important;
   -webkit-overflow-scrolling: touch !important;
+  width: 100% !important;
 }
 
 body.device-mobile-sim .logo,
@@ -2668,26 +2690,51 @@ body.device-mobile-sim .logo {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
 }
 
 body.device-mobile-sim .logo h1 {
-  font-size: 14px !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
-body.device-mobile-sim .library-toggle-btn:hover,
-body.device-mobile-sim .view-toggle-btn:hover {
+body.device-mobile-sim .library-toggle-btn,
+body.device-mobile-sim .view-toggle-btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
   max-width: 28px !important;
   padding: 0 !important;
+  border-radius: 50% !important;
 }
 
-body.device-mobile-sim .library-toggle-btn:hover span,
-body.device-mobile-sim .view-toggle-btn:hover span {
+body.device-mobile-sim .library-toggle-btn span,
+body.device-mobile-sim .view-toggle-btn span {
+  display: none !important;
+}
+
+body.device-mobile-sim .control-mode-selector {
+  gap: 2px !important;
+  height: 26px !important;
+  padding: 1px !important;
+}
+
+body.device-mobile-sim .mode-toggle-btn {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+body.device-mobile-sim .mode-toggle-btn span {
   display: none !important;
 }
 
 body.device-mobile-sim .search-container {
-  width: 180px !important;
+  width: 140px !important;
 }
 
 body.device-mobile-sim #search-input {
