@@ -2531,4 +2531,291 @@ body {
   }
 }
 
+/* --- MOBILE DEVICE SIMULATION (PC PREVIEW) --- */
+body.device-mobile-sim {
+  background: radial-gradient(circle at center, #0f0c24 0%, #030208 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+/* Simulated Phone Frame wrapper */
+body.device-mobile-sim #canvas3d,
+body.device-mobile-sim #hud {
+  width: 390px !important;
+  height: 844px !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 40px !important;
+}
+
+body.device-mobile-sim #canvas3d {
+  z-index: 1 !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 0 12px #18181c, 0 0 0 14px #2a2a30, 0 20px 40px rgba(56, 189, 248, 0.15) !important;
+}
+
+body.device-mobile-sim #hud {
+  z-index: 10 !important;
+  border: 12px solid transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* Dynamic Island Mockup on Simulator */
+body.device-mobile-sim::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - 402px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 28px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 99999;
+  pointer-events: none;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* Force mobile layouts on PC Simulator */
+body.device-mobile-sim #hud {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto 1fr auto !important;
+  grid-template-areas:
+    "header"
+    "main"
+    "footer" !important;
+  padding: 8px !important;
+  gap: 8px !important;
+}
+
+body.device-mobile-sim .spotify-sidebar {
+  position: absolute !important;
+  top: 140px !important;
+  left: 20px !important;
+  width: calc(100% - 40px) !important;
+  height: calc(100% - 240px) !important;
+  z-index: 999 !important;
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.95) !important;
+}
+
+body.device-mobile-sim #hud.sidebar-collapsed .spotify-sidebar {
+  transform: translateX(-110%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.device-mobile-sim .hud-header {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 54px !important;
+  padding: 0 16px !important;
+  gap: 12px !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.device-mobile-sim .logo,
+body.device-mobile-sim .search-container,
+body.device-mobile-sim .system-status {
+  flex-shrink: 0 !important;
+}
+
+body.device-mobile-sim .logo {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.device-mobile-sim .logo h1 {
+  font-size: 14px !important;
+}
+
+body.device-mobile-sim .library-toggle-btn:hover,
+body.device-mobile-sim .view-toggle-btn:hover {
+  max-width: 28px !important;
+  padding: 0 !important;
+}
+
+body.device-mobile-sim .library-toggle-btn:hover span,
+body.device-mobile-sim .view-toggle-btn:hover span {
+  display: none !important;
+}
+
+body.device-mobile-sim .search-container {
+  width: 180px !important;
+}
+
+body.device-mobile-sim #search-input {
+  font-size: 11px !important;
+  padding: 8px 12px 8px 32px !important;
+}
+
+body.device-mobile-sim .system-status {
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.device-mobile-sim .status-indicator {
+  padding: 3px 6px !important;
+  font-size: 9px !important;
+}
+
+body.device-mobile-sim .spotify-banner {
+  position: absolute !important;
+  left: 20px !important;
+  right: 20px !important;
+  top: auto !important;
+  bottom: 104px !important;
+  width: auto !important;
+  padding: 12px !important;
+  gap: 10px !important;
+  z-index: 1001 !important;
+}
+
+body.device-mobile-sim .banner-title {
+  font-size: 18px !important;
+}
+
+body.device-mobile-sim .banner-art {
+  width: 54px !important;
+  height: 54px !important;
+}
+
+body.device-mobile-sim .banner-actions {
+  padding-top: 8px !important;
+  gap: 12px !important;
+}
+
+body.device-mobile-sim .btn-spotify-green {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+body.device-mobile-sim .btn-spotify-green svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+body.device-mobile-sim .hud-player {
+  position: absolute !important;
+  bottom: 20px !important;
+  left: 20px !important;
+  width: calc(100% - 40px) !important;
+  height: 80px !important;
+  justify-content: space-around !important;
+  border-radius: 20px !important;
+  padding: 0 16px !important;
+}
+
+body.device-mobile-sim .player-info {
+  display: none !important;
+}
+
+body.device-mobile-sim .player-controls {
+  width: 65% !important;
+}
+
+body.device-mobile-sim .player-actions {
+  width: 35% !important;
+  gap: 8px !important;
+}
+
+body.device-mobile-sim .volume-control {
+  display: none !important;
+}
+
+body.device-mobile-sim .source-selector {
+  padding: 0 !important;
+}
+
+body.device-mobile-sim .action-btn {
+  padding: 6px 10px !important;
+  font-size: 9.5px !important;
+}
+
+body.device-mobile-sim .focused-track-info {
+  position: absolute !important;
+  bottom: 135px !important;
+  min-width: 280px !important;
+}
+
+body.device-mobile-sim .focused-track-title {
+  font-size: 18px !important;
+}
+
+body.device-mobile-sim .focused-track-artist {
+  font-size: 11px !important;
+}
+
+body.device-mobile-sim #settings-panel {
+  position: absolute !important;
+  top: 146px !important;
+  right: 20px !important;
+}
+
+body.device-mobile-sim #settings-panel:not(.collapsed) {
+  max-width: calc(100% - 16px) !important;
+  width: 280px !important;
+}
+
+body.device-mobile-sim #webcam-monitor {
+  position: absolute !important;
+  bottom: 105px !important;
+  right: 20px !important;
+  width: 120px !important;
+}
+
+body.device-mobile-sim .monitor-body {
+  height: 85px !important;
+}
+
+body.device-mobile-sim .monitor-header {
+  padding: 4px 8px !important;
+}
+
+body.device-mobile-sim .monitor-header .title {
+  font-size: 8px !important;
+}
+
+body.device-mobile-sim .onboarding-card {
+  padding: 48px 16px 24px 16px !important;
+  max-width: 92% !important;
+  margin: 0 auto !important;
+  gap: 12px !important;
+}
+
+body.device-mobile-sim .title-main {
+  font-size: 24px !important;
+}
+
+body.device-mobile-sim .slide-title {
+  font-size: 14px !important;
+}
+
+body.device-mobile-sim .slide-text {
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+body.device-mobile-sim .start-btn {
+  padding: 12px 24px !important;
+  font-size: 10px !important;
+}
+
+body.device-mobile-sim .music-toggle-card {
+  padding: 10px 16px !important;
+  margin: 10px 0 !important;
+}
+
 

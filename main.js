@@ -1117,6 +1117,22 @@ class App {
       });
     }
 
+    const deviceToggle = document.getElementById('btn-toggle-device');
+    if (deviceToggle) {
+      deviceToggle.addEventListener('click', () => {
+        const isMobileSim = document.body.classList.toggle('device-mobile-sim');
+        const textSpan = document.getElementById('device-toggle-text');
+        if (textSpan) {
+          textSpan.textContent = isMobileSim ? lang.t('device_pc') : lang.t('device_mobile');
+          textSpan.setAttribute('data-i18n', isMobileSim ? 'device_pc' : 'device_mobile');
+        }
+        // Force resize window event to adjust WebGL viewports
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 150);
+      });
+    }
+
     // Language Switcher Toggle
     const btnToggleLang = document.getElementById('btn-toggle-lang');
     if (btnToggleLang) {
