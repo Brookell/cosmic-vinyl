@@ -2328,6 +2328,10 @@ body {
     gap: 8px;
   }
 
+  #hud.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
   /* Prevent side-by-side squeezing of 3D Canvas aspect ratios; sidebar overlays instead */
   .spotify-sidebar {
     position: fixed;
