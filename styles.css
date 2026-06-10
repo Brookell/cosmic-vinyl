@@ -277,30 +277,69 @@ body {
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.status-indicator .dot {
-  width: 6px;
-  height: 6px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
-.dot.green { background-color: #22c55e; }
-.dot.yellow { background-color: #eab308; animation: blink 2s infinite ease-in-out; }
-.dot.red { background-color: #ef4444; }
-.dot.gray { background-color: #6b7280; }
+.status-indicator.active {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);
+}
 
-.status-text {
-  color: var(--text-secondary);
+/* Animated sound wave equalizer icon */
+.playing-equalizer-icon {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+.playing-equalizer-icon .bar {
+  width: 2px;
+  height: 100%;
+  background-color: #22c55e;
+  animation: bounceBar 0.8s ease-in-out infinite alternate;
+  transform-origin: bottom;
+  border-radius: 1px;
+}
+
+.playing-equalizer-icon .bar:nth-child(1) {
+  animation-delay: 0.1s;
+  height: 60%;
+}
+
+.playing-equalizer-icon .bar:nth-child(2) {
+  animation-delay: 0.4s;
+  height: 100%;
+}
+
+.playing-equalizer-icon .bar:nth-child(3) {
+  animation-delay: 0.2s;
+  height: 40%;
+}
+
+@keyframes bounceBar {
+  0% { transform: scaleY(0.2); }
+  100% { transform: scaleY(1.0); }
+}
+
+/* Pulse camera requesting icon */
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.pulse-icon {
+  animation: pulseIcon 1.5s infinite ease-in-out;
 }
 
 /* --- SIDEBAR PANEL --- */
@@ -2381,10 +2420,7 @@ body {
     gap: 8px;
   }
 
-  .status-indicator {
-    padding: 3px 6px;
-    font-size: 9px;
-  }
+
 
   /* Detail Banner (sleeve zoom view) adapts to sit beautifully at bottom */
   .spotify-banner {
@@ -2666,10 +2702,7 @@ body.device-mobile-sim .system-status {
   gap: 8px !important;
 }
 
-body.device-mobile-sim .status-indicator {
-  padding: 3px 6px !important;
-  font-size: 9px !important;
-}
+
 
 body.device-mobile-sim .spotify-banner {
   position: absolute !important;

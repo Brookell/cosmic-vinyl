@@ -44,11 +44,15 @@ class GestureController {
   }
 
   updateStatusUI() {
-    const statusText = this.isCameraActive ? lang.t('camera_active') : lang.t('mouse_mode_status');
-    const dotColor = this.isCameraActive ? 'green' : 'gray';
     const mpStatus = document.getElementById('mp-status');
     if (mpStatus) {
-      mpStatus.innerHTML = `<span class="dot ${dotColor}"></span><span class="status-text">${statusText}</span>`;
+      if (this.isCameraActive) {
+        mpStatus.className = "status-indicator active";
+        mpStatus.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" style="color: #22c55e;" title="${lang.t('camera_active')}"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`;
+      } else {
+        mpStatus.className = "status-indicator";
+        mpStatus.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" style="color: #6b7280;" title="${lang.t('camera_off')}"><path fill="currentColor" d="M9.56 8H16c.55 0 1 .45 1 1v6.44l2 2V9c0-1.66-1.34-3-3-3H7.56l2 2zM2.26 4L4 5.74V17c0 1.66 1.34 3 3 3h11.26l1.74 1.74 1.41-1.41L3.67 2.59 2.26 4zM7 8.74L15.26 17H7V8.74z"/></svg>`;
+      }
     }
     const camWarningSpan = document.getElementById('cam-warning')?.querySelector('span');
     if (camWarningSpan) {
@@ -94,7 +98,10 @@ class GestureController {
     if (this.isCameraActive) return;
 
     try {
-      document.getElementById('mp-status').innerHTML = `<span class="dot yellow"></span><span class="status-text">${lang.t('camera_requesting')}</span>`;
+      const mpStatus = document.getElementById('mp-status');
+      if (mpStatus) {
+        mpStatus.innerHTML = `<svg class="pulse-icon" viewBox="0 0 24 24" width="16" height="16" style="color: #eab308;" title="${lang.t('camera_requesting')}"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>`;
+      }
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" }

@@ -78,6 +78,14 @@ class AudioEngine {
     });
     const defaultTracks = [
       {
+        id: "feng_yi",
+        name: "风衣",
+        artist: "孙燕姿",
+        album: "No. 13 作品－跳舞的梵谷",
+        duration: "0:45",
+        iTunesQuery: "风衣 孙燕姿"
+      },
+      {
         id: "green_light",
         name: "Green Light",
         artist: "Lorde",
@@ -651,9 +659,21 @@ class AudioEngine {
     const audioStatus = document.getElementById('audio-status');
     if (audioStatus) {
       if (this.isPlaying) {
-        audioStatus.innerHTML = `<span class="dot green"></span><span class="status-text">${lang.t('playing')}</span>`;
+        audioStatus.className = "status-indicator active";
+        audioStatus.innerHTML = `
+          <div class="playing-equalizer-icon" title="${lang.t('playing')}">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        `;
       } else {
-        audioStatus.innerHTML = `<span class="dot gray"></span><span class="status-text">${lang.t('paused')}</span>`;
+        audioStatus.className = "status-indicator";
+        audioStatus.innerHTML = `
+          <svg viewBox="0 0 24 24" width="14" height="14" style="color: #6b7280;" title="${lang.t('paused')}">
+            <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        `;
       }
     }
   }
