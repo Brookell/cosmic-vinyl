@@ -313,12 +313,12 @@ class GestureController {
           }
         } else {
           // Calculate and broadcast progress
-          const progress = Math.min(1.0, (now - this.fistStartTime) / 2000);
+          const progress = Math.min(1.0, (now - this.fistStartTime) / 1000);
           if (this.onFistHoldProgressCallback) {
             this.onFistHoldProgressCallback(progress);
           }
           
-          if (now - this.fistStartTime >= 2000 && !this.fistPlayTriggered) {
+          if (now - this.fistStartTime >= 1000 && !this.fistPlayTriggered) {
             this.fistPlayTriggered = true;
             if (this.onFistHoldStillCallback) {
               this.onFistHoldStillCallback();
