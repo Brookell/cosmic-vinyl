@@ -160,7 +160,11 @@
         <div class="space-switcher" aria-label="Music Spaces">
           <label class="space-label" for="space-select" data-i18n="music_space">Music Space</label>
           <div class="space-select-row">
-            <select id="space-select" class="space-select" title="Switch Music Space" data-i18n-title="switch_space_title"></select>
+            <div class="space-select-shell">
+              <span class="space-select-orbit" aria-hidden="true"></span>
+              <select id="space-select" class="space-select" title="Switch Music Space" data-i18n-title="switch_space_title"></select>
+              <span class="space-select-chevron" aria-hidden="true"></span>
+            </div>
             <button id="btn-new-space" class="sidebar-action-btn space-create-btn" title="New Music Space" data-i18n-title="new_space_title">
               <svg viewBox="0 0 24 24" width="15" height="15">
                 <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
