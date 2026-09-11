@@ -26,7 +26,7 @@ class App {
     this.albumGroups = []; // Array of { group, sleeve, vinyl, index, initialAngle }
     this.starfield = null;
     this.starPositions = null; // Float32Array cache of original star points
-    this.starsCount = 4000;
+    this.starsCount = 900;
     this.particleSpeedSetting = 1.0;
     this.particleBounceSetting = 1.0; // Dynamic bounce/float setting
     this.bgBrightnessSetting = 1.0; // 1.0x is default 20% in UI
@@ -178,7 +178,7 @@ class App {
       powerPreference: "high-performance"
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -246,8 +246,6 @@ class App {
 
   // Procedural Glowing Starfield Generator
   createStarfield() {
-    // Background particles disabled by user request
-    return;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(this.starsCount * 3);
     const colors = new Float32Array(this.starsCount * 3);
@@ -814,6 +812,14 @@ class App {
     );
   }
 
+  playSearchTrack(track) {
+    this.selectSearchTrack(track);
+    this.updatePlayingTrackUI(this.focusedIndex);
+    audio.play();
+    this.isZoomed = true;
+    this.triggerStarburstWarp();
+  }
+
   // Construct the Curved Carousel (Sleeves & Records)
   createCarousel() {
     const sleeveGeometry = new THREE.BoxGeometry(ALBUM_WIDTH, ALBUM_HEIGHT, 0.08);
@@ -1156,12 +1162,7 @@ class App {
     const headerTutorial = document.getElementById('btn-header-tutorial');
     if (headerTutorial) {
       headerTutorial.addEventListener('click', () => {
-        this.isReplayingTutorial = true;
-        const onboarding = document.getElementById('onboarding');
-        if (onboarding) {
-          onboarding.classList.remove('hidden', 'fade-out');
-        }
-        this.showOnboardingSlide(1);
+        this.openGuideModeChooser();
       });
     }
     
@@ -1227,13 +1228,7 @@ class App {
     if (btnReplayTutorial) {
       btnReplayTutorial.addEventListener('click', () => {
         if (settingsPanel) settingsPanel.classList.add('collapsed');
-        this.isReplayingTutorial = true;
-        
-        const onboarding = document.getElementById('onboarding');
-        if (onboarding) {
-          onboarding.classList.remove('hidden', 'fade-out');
-        }
-        this.showOnboardingSlide(1);
+        this.openGuideModeChooser();
       });
     }
 
@@ -1372,11 +1367,9 @@ class App {
           item.addEventListener('click', (e) => {
             if (e.target.closest('.search-result-add-btn')) return;
             
-            this.selectSearchTrack(track);
+            this.playSearchTrack(track);
             searchResults.classList.add('hidden');
             searchInput.value = '';
-            this.isZoomed = true;
-            this.triggerStarburstWarp();
           });
 
           // Click on the "+" button -> add it to library
@@ -1512,9 +1505,9 @@ class App {
             // Click result body -> preview play immediately on active slot
             item.addEventListener('click', (e) => {
               if (e.target.closest('.result-add-btn')) return;
-              this.selectSearchTrack(track);
-              this.isZoomed = true;
-              this.triggerStarburstWarp();
+              this.playSearchTrack(track);
+              sidebarSearchInput.value = '';
+              sidebarSearchResults.innerHTML = '';
             });
 
             // Click "+" button -> add song to gallery
@@ -1594,6 +1587,7 @@ class App {
     }
     if (this.renderer) {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     }
   }
 
@@ -1926,8 +1920,19 @@ class App {
       setTimeout(() => {
         onboarding.classList.add('hidden');
         onboarding.classList.remove('fade-out');
+        onboarding.classList.remove('guide-choice-mode');
       }, 500);
     }
+  }
+
+  openGuideModeChooser() {
+    this.isReplayingTutorial = true;
+    const onboarding = document.getElementById('onboarding');
+    if (onboarding) {
+      onboarding.classList.add('guide-choice-mode');
+      onboarding.classList.remove('hidden', 'fade-out');
+    }
+    this.showOnboardingSlide(0);
   }
 
   updateTutorialSlideText(slideIndex) {
@@ -1984,7 +1989,48 @@ class App {
     const nextBtn = document.getElementById('btn-next-slide');
     
     if (slideIndex === 0) {
-      if (skipBtn) skipBtn.classList.add('hidden');
+      const title = document.querySelector('.onboarding-slide[data-slide="0"] .title-main');
+      const subtitle = document.querySelector('.onboarding-slide[data-slide="0"] .subtitle-sub');
+      const gestureChoice = document.querySelector('#btn-choose-gesture [data-i18n]');
+      const mouseChoice = document.querySelector('#btn-choose-mouse [data-i18n]');
+      if (this.isReplayingTutorial) {
+        if (title) title.textContent = lang.t('gesture_guide');
+        if (subtitle) {
+          subtitle.textContent = lang.t('choose_guide_mode');
+          subtitle.setAttribute('data-i18n', 'choose_guide_mode');
+        }
+        if (gestureChoice) {
+          gestureChoice.textContent = lang.t('camera_mode_guide');
+          gestureChoice.setAttribute('data-i18n', 'camera_mode_guide');
+        }
+        if (mouseChoice) {
+          mouseChoice.textContent = lang.t('mouse_keyboard_guide');
+          mouseChoice.setAttribute('data-i18n', 'mouse_keyboard_guide');
+        }
+      } else {
+        if (title) title.textContent = 'COSMIC VINYL';
+        if (subtitle) {
+          subtitle.textContent = lang.t('audio_gallery_sub');
+          subtitle.setAttribute('data-i18n', 'audio_gallery_sub');
+        }
+        if (gestureChoice) {
+          gestureChoice.textContent = lang.t('enable_camera_gestures');
+          gestureChoice.setAttribute('data-i18n', 'enable_camera_gestures');
+        }
+        if (mouseChoice) {
+          mouseChoice.textContent = lang.t('browse_with_mouse');
+          mouseChoice.setAttribute('data-i18n', 'browse_with_mouse');
+        }
+      }
+      if (skipBtn) {
+        if (this.isReplayingTutorial) {
+          skipBtn.classList.remove('hidden');
+          skipBtn.textContent = lang.t('close');
+          skipBtn.setAttribute('data-i18n', 'close');
+        } else {
+          skipBtn.classList.add('hidden');
+        }
+      }
       if (navBar) navBar.classList.add('hidden');
       if (startBtn) startBtn.classList.add('hidden');
     } else {

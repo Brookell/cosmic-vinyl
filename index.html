@@ -6,6 +6,7 @@
   <title>Cosmic Vinyl - 3D Gesture Audio Gallery</title>
   <script>
     window.addEventListener('error', function(e) {
+      if (!new URLSearchParams(window.location.search).has('debug')) return;
       const errDiv = document.createElement('div');
       errDiv.style.position = 'fixed';
       errDiv.style.top = '10px';
