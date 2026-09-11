@@ -20,7 +20,7 @@
 - **摄像头手势控制**：通过 MediaPipe Hands 识别张开手掌、伸出食指、握拳等手势。
 - **鼠标与键盘模式**：支持拖拽、方向键、A/D/W/S、点击聚焦和长按播放。
 - **音乐搜索与播放**：可搜索 iTunes 试听片段，点击搜索结果可直接播放，点击加号可加入媒体库。
-- **空间分享链接**：可将当前歌单和视觉设置打包成链接，分享给其他用户打开。
+- **个人音乐空间**：可创建并切换多个本地音乐空间，每个空间保留自己的歌单和视觉亮度设置。
 - **自定义曲库**：支持手动添加歌曲，也支持上传本地音频文件。
 - **双语界面**：内置中英文切换。
 - **教学指南**：可选择“摄像头手势教学”或“鼠标键盘教学”，分别查看对应操作说明。
@@ -111,7 +111,7 @@ This is not just a conventional music player. It is an interactive visual protot
 - **Camera gesture control**: MediaPipe Hands recognizes open palm, index finger, fist, and hold gestures.
 - **Mouse and keyboard mode**: Drag, use arrow keys, focus records, and long-press to play.
 - **Music search and playback**: Search iTunes previews, click a result to play immediately, or use the plus button to add it to the library.
-- **Shareable spaces**: Package the current track list and visual settings into a link that others can open.
+- **Personal music spaces**: Create and switch between local music spaces, each with its own track list and visual brightness settings.
 - **Custom library**: Add songs manually or upload local audio files.
 - **Bilingual UI**: Built-in English and Chinese language switching.
 - **Guide mode selector**: Choose between camera gesture instructions and mouse/keyboard instructions.
