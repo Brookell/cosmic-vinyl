@@ -148,16 +148,22 @@
                 <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
             </button>
-            <!-- Share space button -->
-            <button id="btn-share-space" class="sidebar-action-btn" title="Share Space" data-i18n-title="share_space_title">
-              <svg viewBox="0 0 24 24" width="15" height="15">
-                <path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81A3 3 0 1 0 8.04 14.2l7.12 4.18c-.05.2-.08.41-.08.62a2.92 2.92 0 1 0 2.92-2.92z"/>
-              </svg>
-            </button>
             <!-- Collapse button -->
             <button id="btn-close-library" class="sidebar-action-btn" title="Collapse Library" data-i18n-title="collapse_library">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="space-switcher" aria-label="Music Spaces">
+          <label class="space-label" for="space-select" data-i18n="music_space">Music Space</label>
+          <div class="space-select-row">
+            <select id="space-select" class="space-select" title="Switch Music Space" data-i18n-title="switch_space_title"></select>
+            <button id="btn-new-space" class="sidebar-action-btn space-create-btn" title="New Music Space" data-i18n-title="new_space_title">
+              <svg viewBox="0 0 24 24" width="15" height="15">
+                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
             </button>
           </div>
