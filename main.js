@@ -462,67 +462,10 @@ class App {
     this.scene.add(this.spotLight.target);
   }
 
-  // Procedural Glowing Starfield Generator
+  // Background star particles are intentionally disabled for a calmer scene.
   createStarfield() {
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(this.starsCount * 3);
-    const colors = new Float32Array(this.starsCount * 3);
-    const sizes = new Float32Array(this.starsCount);
-
-    this.starPositions = new Float32Array(this.starsCount * 3);
-
-    for (let i = 0; i < this.starsCount; i++) {
-      // Random coordinates distributed in a shell around the viewer
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 8 + Math.random() * 12; // Outer boundaries
-      
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi) - 2; // Offset slightly behind the carousel
-
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-
-      this.starPositions[i * 3] = x;
-      this.starPositions[i * 3 + 1] = y;
-      this.starPositions[i * 3 + 2] = z;
-
-      // Color mapping: realistic starry sky colors (mostly warm white, soft blue-white, and pure white)
-      const randColor = Math.random();
-      if (randColor < 0.15) {
-        // Pale blue-white star
-        colors[i * 3] = 0.85; colors[i * 3 + 1] = 0.95; colors[i * 3 + 2] = 1.0;
-      } else if (randColor < 0.3) {
-        // Pale warm/yellow-white star
-        colors[i * 3] = 1.0; colors[i * 3 + 1] = 0.98; colors[i * 3 + 2] = 0.85;
-      } else {
-        // Pure starry white
-        colors[i * 3] = 0.95; colors[i * 3 + 1] = 0.95; colors[i * 3 + 2] = 1.0;
-      }
-
-      sizes[i] = 0.05 + Math.random() * 0.15;
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    // Custom circular glow texture
-    const starTexture = this.generateStarTexture();
-
-    const material = new THREE.PointsMaterial({
-      size: 0.035, // much smaller stars for crisp look
-      map: starTexture,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      vertexColors: true,
-      opacity: 0.85
-    });
-
-    this.starfield = new THREE.Points(geometry, material);
-    this.scene.add(this.starfield);
+    this.starfield = null;
+    this.starPositions = null;
   }
 
   // Create dynamic stardust particle follow trail and soft ambient lighting
@@ -2596,7 +2539,16 @@ class App {
       item.group.rotation.set(finalRotX, finalRotY, 0);
     });
 
-    // 6. Update Starfield wave ripples and twinkles
+    // 6. Keep warp timing consistent even with background particles disabled
+    if (this.warpActive) {
+      this.warpFactor *= 0.94;
+      if (this.warpFactor < 0.01) {
+        this.warpFactor = 0;
+        this.warpActive = false;
+      }
+    }
+
+    // 7. Update Starfield wave ripples and twinkles
     if (this.starfield) {
       const positions = this.starfield.geometry.attributes.position.array;
       
@@ -2607,15 +2559,6 @@ class App {
       // Particle drift rotation
       this.starfield.rotation.y = time * 0.015 * simulationSpeedMultiplier * this.particleSpeedSetting;
       this.starfield.rotation.x = time * 0.008 * simulationSpeedMultiplier * this.particleSpeedSetting;
-
-      // Warp blast decay mechanics (Pinch zoom radial burst)
-      if (this.warpActive) {
-        this.warpFactor *= 0.94; // Decay warp burst
-        if (this.warpFactor < 0.01) {
-          this.warpFactor = 0;
-          this.warpActive = false;
-        }
-      }
 
       // Apply audio reactive wave ripples on stars
       // Low frequencies (Bass) create wave-like ripples through coordinates
@@ -2656,7 +2599,7 @@ class App {
       this.starfield.geometry.attributes.position.needsUpdate = true;
     }
 
-    // 7. Render HUD updates (Progress, time labels, play state toggle buttons)
+    // 8. Render HUD updates (Progress, time labels, play state toggle buttons)
     this.updateHUDProgressBar();
 
     // Sync play/pause icons on Spotify Detail Banner (Active only for current playing track)
