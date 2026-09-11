@@ -19,6 +19,7 @@ const translations = {
     search_placeholder: "What do you want to play?",
     your_library: "Your Library",
     add_custom_song: "Add Custom Song",
+    share_space_title: "Share Space",
     collapse_library: "Collapse Library",
     all: "All",
     gestures: "Gestures",
@@ -104,6 +105,10 @@ const translations = {
     paused: "Paused",
     close: "CLOSE",
     close_guide: "CLOSE GUIDE"
+    ,
+    share_copied: "Share link copied",
+    share_failed: "Copy failed. Please copy the link manually.",
+    shared_space_loaded: "Shared space loaded"
   },
   zh: {
     library: "媒体库",
@@ -123,6 +128,7 @@ const translations = {
     search_placeholder: "你想播放什么歌曲？",
     your_library: "您的媒体库",
     add_custom_song: "添加自定义歌曲",
+    share_space_title: "分享空间",
     collapse_library: "收起媒体库",
     all: "全部",
     gestures: "手势",
@@ -207,7 +213,10 @@ const translations = {
     playing: "正在播放",
     paused: "已暂停",
     close: "关闭",
-    close_guide: "关闭引导"
+    close_guide: "关闭引导",
+    share_copied: "分享链接已复制",
+    share_failed: "复制失败，请手动复制链接。",
+    shared_space_loaded: "已载入分享空间"
   }
 };
 

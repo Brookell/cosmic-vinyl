@@ -98,6 +98,7 @@ class App {
 
   // Start the application setup
   init() {
+    this.loadSharedSpaceFromURL();
     lang.updateDOM();
     
     
@@ -115,6 +116,7 @@ class App {
       this.setupLights();
       // Run loop
       this.animate();
+      this.applySharedSpaceSettings();
     } catch (e) {
       console.error("WebGL/Three.js initialization failed:", e);
       const canvas3d = document.getElementById('canvas3d');
@@ -155,6 +157,131 @@ class App {
         console.warn("Could not regenerate album covers:", e);
       }
     });
+  }
+
+  encodeSpacePayload(payload) {
+    const json = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  decodeSpacePayload(encoded) {
+    const padded = encoded.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((encoded.length + 3) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  getSerializableTracks() {
+    return audio.tracks.map((track, index) => ({
+      id: track.id || `shared_${index}`,
+      name: track.name,
+      artist: track.artist,
+      album: track.album || track.name,
+      duration: track.duration || '0:45',
+      iTunesQuery: track.iTunesQuery || `${track.name} ${track.artist}`,
+      previewUrl: track.previewUrl || null,
+      artworkUrl: track.artworkUrl || null,
+      isShared: true
+    }));
+  }
+
+  loadSharedSpaceFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const encodedSpace = params.get('space');
+    if (!encodedSpace) return;
+
+    try {
+      const payload = this.decodeSpacePayload(encodedSpace);
+      if (!payload || !Array.isArray(payload.tracks) || payload.tracks.length === 0) return;
+
+      audio.tracks = payload.tracks
+        .filter((track) => track && track.name && track.artist)
+        .map((track, index) => ({
+          id: track.id || `shared_${index}`,
+          name: track.name,
+          artist: track.artist,
+          album: track.album || track.name,
+          duration: track.duration || '0:45',
+          iTunesQuery: track.iTunesQuery || `${track.name} ${track.artist}`,
+          previewUrl: track.previewUrl || null,
+          artworkUrl: track.artworkUrl || null,
+          isShared: true
+        }));
+
+      NUM_ALBUMS = audio.tracks.length;
+      this.sharedSpaceSettings = payload.settings || null;
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch (e) {
+      console.warn('Failed to load shared space:', e);
+    }
+  }
+
+  applySharedSpaceSettings() {
+    if (!this.sharedSpaceSettings) return;
+
+    const settings = this.sharedSpaceSettings;
+    if (typeof settings.bgBrightness === 'number') {
+      this.bgBrightnessSetting = settings.bgBrightness;
+      const slider = document.getElementById('setting-brightness');
+      const label = document.getElementById('brightness-val');
+      const percent = Math.round(settings.bgBrightness * 20);
+      if (slider) slider.value = String(percent);
+      if (label) label.textContent = `${percent}%`;
+      this.updateBackgroundAndFog();
+    }
+
+    if (typeof settings.sceneBrightness === 'number') {
+      this.sceneBrightness = settings.sceneBrightness;
+      const slider = document.getElementById('setting-scene-brightness');
+      const label = document.getElementById('scene-brightness-val');
+      if (slider) slider.value = String(Math.round(settings.sceneBrightness * 10));
+      if (label) label.textContent = `${settings.sceneBrightness.toFixed(1)}x`;
+      this.updateLightsIntensity();
+    }
+  }
+
+  async shareCurrentSpace() {
+    const payload = {
+      version: 1,
+      createdAt: new Date().toISOString(),
+      title: 'Cosmic Vinyl Space',
+      tracks: this.getSerializableTracks(),
+      settings: {
+        bgBrightness: this.bgBrightnessSetting,
+        sceneBrightness: this.sceneBrightness
+      }
+    };
+    const encoded = this.encodeSpacePayload(payload);
+    const url = `${window.location.origin}${window.location.pathname}?space=${encoded}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      this.showToast(lang.t('share_copied'));
+    } catch (e) {
+      console.warn('Clipboard copy failed:', e);
+      window.prompt(lang.t('share_failed'), url);
+    }
+  }
+
+  showToast(message) {
+    let toast = document.getElementById('cosmic-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'cosmic-toast';
+      toast.className = 'cosmic-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('visible');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 2200);
   }
 
   // Initialize Three.js WebGL Renderer, Scene, Camera
@@ -1405,6 +1532,7 @@ class App {
     const hud = document.getElementById('hud');
     const btnToggleLib = document.getElementById('btn-toggle-library');
     const btnCloseLib = document.getElementById('btn-close-library');
+    const btnShareSpace = document.getElementById('btn-share-space');
     
     if (btnToggleLib) {
       btnToggleLib.addEventListener('click', () => {
@@ -1419,6 +1547,10 @@ class App {
         hud.classList.add('sidebar-collapsed');
         setTimeout(() => this.onWindowResize(), 310);
       });
+    }
+
+    if (btnShareSpace) {
+      btnShareSpace.addEventListener('click', () => this.shareCurrentSpace());
     }
 
         // Add Custom Song Panel Show/Hide
@@ -2691,4 +2823,5 @@ class App {
 
 // Start app
 const app = new App();
+window.app = app;
 app.init();

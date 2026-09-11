@@ -1690,6 +1690,32 @@ select:focus-visible {
   transform: scale(1.05);
 }
 
+.cosmic-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 116px;
+  z-index: 2000;
+  transform: translate(-50%, 10px);
+  opacity: 0;
+  pointer-events: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(9, 9, 11, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 22px rgba(56, 189, 248, 0.18);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.cosmic-toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* Chips / Filters */
 .filter-chips {
   display: flex;
