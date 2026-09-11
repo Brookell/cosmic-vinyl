@@ -2175,6 +2175,7 @@ class App {
         onboarding.classList.add('hidden');
         onboarding.classList.remove('fade-out');
         onboarding.classList.remove('guide-choice-mode');
+        onboarding.classList.remove('tutorial-step-mode');
       }, 500);
     }
   }
@@ -2222,6 +2223,10 @@ class App {
   showOnboardingSlide(slideIndex) {
     this.currentOnboardingSlide = slideIndex;
     this.updateTutorialSlideText(slideIndex);
+    const onboarding = document.getElementById('onboarding');
+    if (onboarding) {
+      onboarding.classList.toggle('tutorial-step-mode', slideIndex > 0);
+    }
     
     // Select all slides
     const slides = document.querySelectorAll('.onboarding-slide');

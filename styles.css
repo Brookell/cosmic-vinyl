@@ -963,6 +963,34 @@ html[data-lang="en"] .onboarding-desc {
   box-shadow: 0 0 22px rgba(56, 189, 248, 0.26);
 }
 
+#onboarding.tutorial-step-mode .onboarding-card {
+  width: min(640px, calc(100vw - 64px));
+  height: auto;
+  min-height: 0;
+  padding: 58px 42px 34px;
+  gap: 20px;
+}
+
+#onboarding.tutorial-step-mode .onboarding-slide.active {
+  gap: 14px;
+}
+
+#onboarding.tutorial-step-mode .slide-title {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+#onboarding.tutorial-step-mode .slide-text {
+  max-width: 440px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#onboarding.tutorial-step-mode .onboarding-navigation {
+  margin-top: 20px;
+  padding-top: 22px;
+}
+
 .btn-icon {
   margin-right: 8px;
   font-size: 14px;
@@ -2951,6 +2979,21 @@ html[data-lang="en"] .onboarding-desc {
   .music-toggle-card {
     padding: 10px 16px !important;
     margin: 10px 0 !important;
+  }
+
+  #onboarding.tutorial-step-mode .onboarding-card {
+    width: calc(100vw - 24px);
+    height: auto;
+    padding: 50px 18px 24px;
+  }
+
+  #onboarding.tutorial-step-mode .slide-title {
+    font-size: 15px;
+  }
+
+  #onboarding.tutorial-step-mode .slide-text {
+    font-size: 12px;
+    line-height: 1.45;
   }
 }
 
