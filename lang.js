@@ -259,6 +259,9 @@ class LanguageManager {
   updateDOM() {
     console.log("LanguageManager: updating DOM for", this.currentLang);
     try {
+      document.documentElement.lang = this.currentLang === 'zh' ? 'zh-CN' : 'en';
+      document.documentElement.dataset.lang = this.currentLang;
+
       // 1. Text translations (data-i18n)
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');

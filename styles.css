@@ -818,8 +818,10 @@ select:focus-visible {
 }
 
 .onboarding-card {
-  width: 100%;
-  max-width: 440px;
+  box-sizing: border-box;
+  width: min(512px, calc(100vw - 48px));
+  height: clamp(560px, 78vh, 640px);
+  max-width: none;
   padding: 64px 36px 36px 36px;
   text-align: center;
   display: flex;
@@ -861,6 +863,7 @@ select:focus-visible {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 5px;
+  flex: 0 0 auto;
 }
 
 .title-main {
@@ -883,9 +886,11 @@ select:focus-visible {
 }
 
 .onboarding-desc {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.52;
+  min-height: 118px;
+  justify-content: center;
 }
 
 .onboarding-mode-selection {
@@ -894,10 +899,23 @@ select:focus-visible {
   gap: 20px;
   width: 100%;
   margin-top: 10px;
+  flex: 0 0 auto;
+}
+
+html[data-lang="zh"] .onboarding-desc {
+  font-size: 13px !important;
+  line-height: 1.68 !important;
+}
+
+html[data-lang="en"] .onboarding-desc {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
 }
 
 #onboarding.guide-choice-mode .onboarding-card {
-  max-width: 500px;
+  width: min(760px, calc(100vw - 96px));
+  height: min(560px, calc(100vh - 96px));
+  max-width: none;
   padding: 58px 34px 38px;
 }
 
@@ -1450,7 +1468,9 @@ select:focus-visible {
   }
 
   .onboarding-card {
-    max-width: calc(100vw - 24px);
+    width: calc(100vw - 24px);
+    height: min(620px, calc(100vh - 24px));
+    max-width: none;
     padding: 54px 18px 24px;
   }
 
@@ -2902,8 +2922,10 @@ select:focus-visible {
 
   /* Onboarding Card scaling to fit mobile screens perfectly */
   .onboarding-card {
+    width: 92%;
+    height: min(620px, calc(100vh - 20px));
     padding: 48px 16px 24px 16px;
-    max-width: 92%;
+    max-width: none;
     margin: 0 auto;
     gap: 12px;
   }
@@ -3213,8 +3235,10 @@ body.device-mobile-sim .monitor-header .title {
 }
 
 body.device-mobile-sim .onboarding-card {
+  width: 92% !important;
+  height: min(620px, calc(100vh - 20px)) !important;
   padding: 48px 16px 24px 16px !important;
-  max-width: 92% !important;
+  max-width: none !important;
   margin: 0 auto !important;
   gap: 12px !important;
 }
