@@ -94,11 +94,17 @@ class App {
     this.mouseLongPressStartTime = 0;
     this.mouseLongPressTriggered = false;
     this.onboardingMode = 'gesture'; // 'gesture' or 'mouse'
+
+    // Personal music spaces
+    this.spacesStorageKey = 'cosmic_vinyl_spaces_v1';
+    this.activeSpaceStorageKey = 'cosmic_vinyl_active_space_v1';
+    this.spaces = [];
+    this.activeSpaceId = null;
   }
 
   // Start the application setup
   init() {
-    this.loadSharedSpaceFromURL();
+    this.initializeSpaces();
     lang.updateDOM();
     
     
@@ -116,7 +122,7 @@ class App {
       this.setupLights();
       // Run loop
       this.animate();
-      this.applySharedSpaceSettings();
+      this.applyCurrentSpaceSettingsToControls();
     } catch (e) {
       console.error("WebGL/Three.js initialization failed:", e);
       const canvas3d = document.getElementById('canvas3d');
@@ -159,113 +165,198 @@ class App {
     });
   }
 
-  encodeSpacePayload(payload) {
-    const json = JSON.stringify(payload);
-    const bytes = new TextEncoder().encode(json);
-    let binary = '';
-    bytes.forEach((byte) => {
-      binary += String.fromCharCode(byte);
-    });
-    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  generateSpaceId() {
+    return `space_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  decodeSpacePayload(encoded) {
-    const padded = encoded.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((encoded.length + 3) % 4);
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
+  cloneTracks(tracks) {
+    return tracks
+      .filter((track) => track && track.name && track.artist)
+      .map((track, index) => ({
+        id: track.id || `track_${index}_${Date.now()}`,
+        name: track.name,
+        artist: track.artist,
+        album: track.album || track.name,
+        duration: track.duration || (track.previewUrl ? '0:45' : '--:--'),
+        iTunesQuery: track.iTunesQuery || `${track.name} ${track.artist}`,
+        previewUrl: track.previewUrl || null,
+        artworkUrl: track.artworkUrl || null,
+        isCustom: Boolean(track.isCustom)
+      }));
   }
 
-  getSerializableTracks() {
-    return audio.tracks.map((track, index) => ({
-      id: track.id || `shared_${index}`,
-      name: track.name,
-      artist: track.artist,
-      album: track.album || track.name,
-      duration: track.duration || '0:45',
-      iTunesQuery: track.iTunesQuery || `${track.name} ${track.artist}`,
-      previewUrl: track.previewUrl || null,
-      artworkUrl: track.artworkUrl || null,
-      isShared: true
-    }));
+  getCurrentSpaceSettings() {
+    return {
+      bgBrightness: this.bgBrightnessSetting,
+      sceneBrightness: this.sceneBrightness
+    };
   }
 
-  loadSharedSpaceFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const encodedSpace = params.get('space');
-    if (!encodedSpace) return;
+  normalizeSpace(space, index = 0) {
+    return {
+      id: space.id || this.generateSpaceId(),
+      name: space.name || (index === 0 ? lang.t('default_space_name') : `Space ${index + 1}`),
+      tracks: this.cloneTracks(Array.isArray(space.tracks) ? space.tracks : audio.tracks),
+      settings: {
+        bgBrightness: typeof space.settings?.bgBrightness === 'number' ? space.settings.bgBrightness : 1.0,
+        sceneBrightness: typeof space.settings?.sceneBrightness === 'number' ? space.settings.sceneBrightness : 2.5
+      },
+      createdAt: space.createdAt || new Date().toISOString(),
+      updatedAt: space.updatedAt || new Date().toISOString()
+    };
+  }
 
+  initializeSpaces() {
+    let savedSpaces = [];
     try {
-      const payload = this.decodeSpacePayload(encodedSpace);
-      if (!payload || !Array.isArray(payload.tracks) || payload.tracks.length === 0) return;
-
-      audio.tracks = payload.tracks
-        .filter((track) => track && track.name && track.artist)
-        .map((track, index) => ({
-          id: track.id || `shared_${index}`,
-          name: track.name,
-          artist: track.artist,
-          album: track.album || track.name,
-          duration: track.duration || '0:45',
-          iTunesQuery: track.iTunesQuery || `${track.name} ${track.artist}`,
-          previewUrl: track.previewUrl || null,
-          artworkUrl: track.artworkUrl || null,
-          isShared: true
-        }));
-
-      NUM_ALBUMS = audio.tracks.length;
-      this.sharedSpaceSettings = payload.settings || null;
-      window.history.replaceState(null, '', window.location.pathname);
+      savedSpaces = JSON.parse(localStorage.getItem(this.spacesStorageKey) || '[]');
     } catch (e) {
-      console.warn('Failed to load shared space:', e);
+      console.warn('Failed to parse saved music spaces:', e);
+      savedSpaces = [];
+    }
+
+    if (Array.isArray(savedSpaces) && savedSpaces.length > 0) {
+      this.spaces = savedSpaces.map((space, index) => this.normalizeSpace(space, index));
+    } else {
+      const now = new Date().toISOString();
+      this.spaces = [{
+        id: this.generateSpaceId(),
+        name: lang.t('default_space_name'),
+        tracks: this.cloneTracks(audio.tracks),
+        settings: this.getCurrentSpaceSettings(),
+        createdAt: now,
+        updatedAt: now
+      }];
+    }
+
+    const savedActiveId = localStorage.getItem(this.activeSpaceStorageKey);
+    this.activeSpaceId = this.spaces.some((space) => space.id === savedActiveId)
+      ? savedActiveId
+      : this.spaces[0].id;
+
+    const activeSpace = this.getActiveSpace();
+    if (activeSpace) {
+      audio.tracks = this.cloneTracks(activeSpace.tracks);
+      NUM_ALBUMS = audio.tracks.length;
+      this.applySpaceSettings(activeSpace.settings);
+    }
+
+    this.persistSpaces();
+    this.renderSpaceSelector();
+  }
+
+  getActiveSpace() {
+    return this.spaces.find((space) => space.id === this.activeSpaceId) || this.spaces[0] || null;
+  }
+
+  persistSpaces() {
+    localStorage.setItem(this.spacesStorageKey, JSON.stringify(this.spaces));
+    if (this.activeSpaceId) {
+      localStorage.setItem(this.activeSpaceStorageKey, this.activeSpaceId);
     }
   }
 
-  applySharedSpaceSettings() {
-    if (!this.sharedSpaceSettings) return;
+  saveActiveSpace() {
+    const activeSpace = this.getActiveSpace();
+    if (!activeSpace) return;
 
-    const settings = this.sharedSpaceSettings;
+    activeSpace.tracks = this.cloneTracks(audio.tracks);
+    activeSpace.settings = this.getCurrentSpaceSettings();
+    activeSpace.updatedAt = new Date().toISOString();
+    this.persistSpaces();
+    this.renderSpaceSelector();
+  }
+
+  renderSpaceSelector() {
+    const select = document.getElementById('space-select');
+    if (!select) return;
+
+    select.innerHTML = '';
+    this.spaces.forEach((space) => {
+      const option = document.createElement('option');
+      option.value = space.id;
+      option.textContent = space.name;
+      option.selected = space.id === this.activeSpaceId;
+      select.appendChild(option);
+    });
+  }
+
+  createNewSpace() {
+    this.saveActiveSpace();
+
+    const fallbackName = lang.t('default_space_name');
+    const name = window.prompt(lang.t('new_space_prompt'), fallbackName);
+    if (name === null) return;
+
+    const trimmedName = name.trim() || fallbackName;
+    const now = new Date().toISOString();
+    const seedTracks = this.cloneTracks(audio.tracks.slice(0, 1));
+    this.spaces.push({
+      id: this.generateSpaceId(),
+      name: trimmedName,
+      tracks: seedTracks.length > 0 ? seedTracks : this.cloneTracks(audio.tracks),
+      settings: this.getCurrentSpaceSettings(),
+      createdAt: now,
+      updatedAt: now
+    });
+
+    this.switchSpace(this.spaces[this.spaces.length - 1].id, { saveCurrent: false });
+    this.showToast(lang.t('space_created'));
+  }
+
+  switchSpace(spaceId, options = {}) {
+    const { saveCurrent = true } = options;
+    const nextSpace = this.spaces.find((space) => space.id === spaceId);
+    if (!nextSpace || nextSpace.id === this.activeSpaceId) return;
+
+    if (saveCurrent) {
+      this.saveActiveSpace();
+    }
+
+    audio.pause();
+    this.activeSpaceId = nextSpace.id;
+    audio.tracks = this.cloneTracks(nextSpace.tracks);
+    NUM_ALBUMS = audio.tracks.length;
+    this.albumCanvasTextures = [];
+    this.currentRotation = 0;
+    this.targetRotation = 0;
+    this.focusedIndex = 0;
+    this.isZoomed = false;
+    this.applySpaceSettings(nextSpace.settings);
+
+    if (this.scene) {
+      this.rebuildCarousel();
+      this.focusAlbumIndex(0, true);
+    }
+
+    this.updatePlayingTrackUI(0);
+    this.applyCurrentSpaceSettingsToControls();
+    this.persistSpaces();
+    this.renderSpaceSelector();
+  }
+
+  applySpaceSettings(settings = {}) {
     if (typeof settings.bgBrightness === 'number') {
       this.bgBrightnessSetting = settings.bgBrightness;
-      const slider = document.getElementById('setting-brightness');
-      const label = document.getElementById('brightness-val');
-      const percent = Math.round(settings.bgBrightness * 20);
-      if (slider) slider.value = String(percent);
-      if (label) label.textContent = `${percent}%`;
-      this.updateBackgroundAndFog();
     }
-
     if (typeof settings.sceneBrightness === 'number') {
       this.sceneBrightness = settings.sceneBrightness;
-      const slider = document.getElementById('setting-scene-brightness');
-      const label = document.getElementById('scene-brightness-val');
-      if (slider) slider.value = String(Math.round(settings.sceneBrightness * 10));
-      if (label) label.textContent = `${settings.sceneBrightness.toFixed(1)}x`;
-      this.updateLightsIntensity();
     }
   }
 
-  async shareCurrentSpace() {
-    const payload = {
-      version: 1,
-      createdAt: new Date().toISOString(),
-      title: 'Cosmic Vinyl Space',
-      tracks: this.getSerializableTracks(),
-      settings: {
-        bgBrightness: this.bgBrightnessSetting,
-        sceneBrightness: this.sceneBrightness
-      }
-    };
-    const encoded = this.encodeSpacePayload(payload);
-    const url = `${window.location.origin}${window.location.pathname}?space=${encoded}`;
+  applyCurrentSpaceSettingsToControls() {
+    const bgSlider = document.getElementById('setting-brightness');
+    const bgLabel = document.getElementById('brightness-val');
+    const bgPercent = Math.round(this.bgBrightnessSetting * 20);
+    if (bgSlider) bgSlider.value = String(bgPercent);
+    if (bgLabel) bgLabel.textContent = `${bgPercent}%`;
+    this.updateBackgroundAndFog();
 
-    try {
-      await navigator.clipboard.writeText(url);
-      this.showToast(lang.t('share_copied'));
-    } catch (e) {
-      console.warn('Clipboard copy failed:', e);
-      window.prompt(lang.t('share_failed'), url);
-    }
+    const sceneSlider = document.getElementById('setting-scene-brightness');
+    const sceneLabel = document.getElementById('scene-brightness-val');
+    if (sceneSlider) sceneSlider.value = String(Math.round(this.sceneBrightness * 10));
+    if (sceneLabel) sceneLabel.textContent = `${this.sceneBrightness.toFixed(1)}x`;
+    this.updateLightsIntensity();
   }
 
   showToast(message) {
@@ -895,6 +986,7 @@ class App {
       
       // Update focused detail banner with the new track information
       this.updateHUDTrackDetails(focusedIdx);
+      this.saveActiveSpace();
     }
     
     // Load cover texture onto 3D card front and vinyl label dynamically
@@ -1379,6 +1471,7 @@ class App {
         valBrightness.textContent = val + '%';
         this.bgBrightnessSetting = val / 20.0;
         this.updateBackgroundAndFog();
+        this.saveActiveSpace();
       });
     }
 
@@ -1391,6 +1484,7 @@ class App {
         valSceneBrightness.textContent = floatVal.toFixed(1) + 'x';
         this.sceneBrightness = floatVal;
         this.updateLightsIntensity();
+        this.saveActiveSpace();
       });
     }
 
@@ -1532,7 +1626,9 @@ class App {
     const hud = document.getElementById('hud');
     const btnToggleLib = document.getElementById('btn-toggle-library');
     const btnCloseLib = document.getElementById('btn-close-library');
-    const btnShareSpace = document.getElementById('btn-share-space');
+    const spaceSelect = document.getElementById('space-select');
+    const btnNewSpace = document.getElementById('btn-new-space');
+    const btnClearLibrary = document.getElementById('btn-clear-library');
     
     if (btnToggleLib) {
       btnToggleLib.addEventListener('click', () => {
@@ -1549,8 +1645,34 @@ class App {
       });
     }
 
-    if (btnShareSpace) {
-      btnShareSpace.addEventListener('click', () => this.shareCurrentSpace());
+    if (spaceSelect) {
+      spaceSelect.addEventListener('change', (e) => this.switchSpace(e.target.value));
+    }
+
+    if (btnNewSpace) {
+      btnNewSpace.addEventListener('click', () => this.createNewSpace());
+    }
+
+    if (btnClearLibrary) {
+      btnClearLibrary.addEventListener('click', () => {
+        if (audio.tracks.length <= 1) {
+          this.showToast(lang.t('library_needs_one_track'));
+          return;
+        }
+
+        const confirmed = window.confirm(lang.t('clear_all_confirm'));
+        if (!confirmed) return;
+
+        audio.pause();
+        audio.tracks = [audio.tracks[0]];
+        audio.currentTrackIndex = 0;
+        this.albumCanvasTextures = this.albumCanvasTextures.slice(0, 1);
+        audio.saveTracksToLocalStorage();
+        this.saveActiveSpace();
+        this.rebuildCarousel();
+        this.focusAlbumIndex(0, true);
+        this.updatePlayingTrackUI(0);
+      });
     }
 
         // Add Custom Song Panel Show/Hide
@@ -2760,6 +2882,7 @@ class App {
   // Appends a new song to library and rebuilds the 3D Cover Flow
   addSongToLibrary(name, artist, artworkUrl = null, previewUrl = null, fileBlob = null) {
     const newIdx = audio.addTrack(name, artist, artworkUrl, previewUrl, fileBlob);
+    this.saveActiveSpace();
     this.rebuildCarousel();
     
     // Auto-focus and zoom-in to the new addition
@@ -2779,6 +2902,7 @@ class App {
     }
     this.albumCanvasTextures.splice(index, 1);
     
+    this.saveActiveSpace();
     this.rebuildCarousel();
     
     // Refocus if index was out of bounds (wrapped using modulo)
