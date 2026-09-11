@@ -1690,6 +1690,58 @@ select:focus-visible {
   transform: scale(1.05);
 }
 
+.space-switcher {
+  margin-top: 14px;
+  padding: 10px 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.space-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent-blue);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.space-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.space-select {
+  min-width: 0;
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  outline: none;
+  background: rgba(8, 8, 14, 0.78);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.space-select:focus {
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.14);
+}
+
+.space-create-btn {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.08);
+}
+
 .cosmic-toast {
   position: fixed;
   left: 50%;
