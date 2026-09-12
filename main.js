@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { audio } from './audio.js';
 import { gestures } from './gestures.js';
 import { lang } from './lang.js';
+import { supabase } from './supabaseClient.js';
 
 // --- CONFIGURATION CONSTANTS ---
 let NUM_ALBUMS = audio.tracks.length;
@@ -98,13 +99,18 @@ class App {
     // Personal music spaces
     this.spacesStorageKey = 'cosmic_vinyl_spaces_v1';
     this.activeSpaceStorageKey = 'cosmic_vinyl_active_space_v1';
+    this.pendingAddSongStorageKey = 'cosmic_vinyl_pending_add_song_v1';
     this.spaces = [];
     this.activeSpaceId = null;
+    this.currentUser = null;
+    this.pendingAddSong = null;
+    this.cloudSaveTimer = null;
   }
 
   // Start the application setup
   init() {
     this.initializeSpaces();
+    this.initializeAuth();
     lang.updateDOM();
     
     
@@ -195,6 +201,7 @@ class App {
   normalizeSpace(space, index = 0) {
     return {
       id: space.id || this.generateSpaceId(),
+      cloudId: space.cloudId || null,
       name: space.name || (index === 0 ? lang.t('default_space_name') : `Space ${index + 1}`),
       tracks: this.cloneTracks(Array.isArray(space.tracks) ? space.tracks : audio.tracks),
       settings: {
@@ -265,6 +272,258 @@ class App {
     activeSpace.updatedAt = new Date().toISOString();
     this.persistSpaces();
     this.renderSpaceSelector();
+    this.scheduleCloudSave();
+  }
+
+  async initializeAuth() {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      this.currentUser = data.session?.user || null;
+      if (this.currentUser) {
+        await this.loadCloudSpaces();
+      }
+
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        this.currentUser = session?.user || null;
+        if (this.currentUser) {
+          await this.loadCloudSpaces();
+          await this.consumePendingAddSong();
+        }
+      });
+    } catch (e) {
+      console.warn('Supabase auth initialization failed:', e);
+    }
+  }
+
+  requireAuthForSave(pendingSong) {
+    this.pendingAddSong = pendingSong;
+    if (!pendingSong.fileBlob) {
+      sessionStorage.setItem(this.pendingAddSongStorageKey, JSON.stringify(pendingSong));
+    } else {
+      sessionStorage.removeItem(this.pendingAddSongStorageKey);
+    }
+    this.showAuthModal(lang.t('auth_required_message'));
+  }
+
+  showAuthModal(message = '') {
+    const modal = document.getElementById('auth-modal');
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) messageEl.textContent = message;
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('auth-email')?.focus();
+    }
+  }
+
+  hideAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  setAuthMessage(message) {
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) messageEl.textContent = message;
+  }
+
+  async handleAuthSubmit(mode = 'signup') {
+    const email = document.getElementById('auth-email')?.value.trim();
+    const password = document.getElementById('auth-password')?.value;
+    if (!email || !password) return;
+
+    this.setAuthMessage(lang.t('auth_signing_in'));
+    try {
+      const authCall = mode === 'login'
+        ? supabase.auth.signInWithPassword({ email, password })
+        : supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: window.location.href }
+          });
+
+      const { data, error } = await authCall;
+      if (error) throw error;
+
+      if (data.session?.user) {
+        this.currentUser = data.session.user;
+        this.hideAuthModal();
+        await this.loadCloudSpaces();
+        await this.consumePendingAddSong();
+        return;
+      }
+
+      this.setAuthMessage(lang.t('auth_check_email'));
+    } catch (e) {
+      console.warn('Authentication failed:', e);
+      this.setAuthMessage(lang.t('auth_failed'));
+    }
+  }
+
+  async consumePendingAddSong() {
+    if (!this.currentUser) return;
+
+    if (!this.pendingAddSong) {
+      const storedPending = sessionStorage.getItem(this.pendingAddSongStorageKey);
+      if (storedPending) {
+        try {
+          this.pendingAddSong = JSON.parse(storedPending);
+        } catch (e) {
+          sessionStorage.removeItem(this.pendingAddSongStorageKey);
+        }
+      }
+    }
+
+    if (!this.pendingAddSong) return;
+
+    const pending = this.pendingAddSong;
+    this.pendingAddSong = null;
+    sessionStorage.removeItem(this.pendingAddSongStorageKey);
+    this.addSongToLibrary(
+      pending.name,
+      pending.artist,
+      pending.artworkUrl,
+      pending.previewUrl,
+      pending.fileBlob || null,
+      { skipAuthGate: true }
+    );
+    this.showToast(lang.t('auth_saved'));
+  }
+
+  scheduleCloudSave() {
+    if (!this.currentUser) return;
+    clearTimeout(this.cloudSaveTimer);
+    this.cloudSaveTimer = setTimeout(() => {
+      this.syncActiveSpaceToCloud().catch((e) => console.warn('Cloud save failed:', e));
+    }, 700);
+  }
+
+  async loadCloudSpaces() {
+    if (!this.currentUser) return;
+
+    const { data, error } = await supabase
+      .from('music_spaces')
+      .select('id, name, settings, created_at, updated_at, space_tracks(*)')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.warn('Could not load cloud spaces:', error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      await this.syncActiveSpaceToCloud();
+      return;
+    }
+
+    const cloudSpaces = data.map((space, index) => this.normalizeSpace({
+      id: `cloud_${space.id}`,
+      cloudId: space.id,
+      name: space.name,
+      settings: space.settings || {},
+      createdAt: space.created_at,
+      updatedAt: space.updated_at,
+      tracks: (space.space_tracks || [])
+        .sort((a, b) => (a.position || 0) - (b.position || 0))
+        .map((track) => ({
+          id: track.id,
+          name: track.name,
+          artist: track.artist,
+          album: track.album,
+          duration: track.duration,
+          previewUrl: track.preview_url,
+          artworkUrl: track.artwork_url,
+          iTunesQuery: track.itunes_query,
+          isCustom: track.is_custom
+        }))
+    }, index));
+
+    if (cloudSpaces.length > 0) {
+      this.spaces = cloudSpaces;
+      this.activeSpaceId = cloudSpaces[0].id;
+      const activeSpace = this.getActiveSpace();
+      audio.tracks = this.cloneTracks(activeSpace.tracks);
+      NUM_ALBUMS = audio.tracks.length;
+      this.applySpaceSettings(activeSpace.settings);
+      this.persistSpaces();
+      this.renderSpaceSelector();
+      if (this.scene) {
+        this.albumCanvasTextures = [];
+        this.rebuildCarousel();
+        this.focusAlbumIndex(0, true);
+        this.updatePlayingTrackUI(0);
+      }
+    }
+  }
+
+  async ensureCloudSpace(activeSpace) {
+    if (!this.currentUser || !activeSpace) return null;
+    if (activeSpace.cloudId) return activeSpace.cloudId;
+
+    const { data, error } = await supabase
+      .from('music_spaces')
+      .insert({
+        user_id: this.currentUser.id,
+        name: activeSpace.name,
+        settings: activeSpace.settings || this.getCurrentSpaceSettings()
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    activeSpace.cloudId = data.id;
+    activeSpace.id = `cloud_${data.id}`;
+    this.activeSpaceId = activeSpace.id;
+    this.persistSpaces();
+    this.renderSpaceSelector();
+    return data.id;
+  }
+
+  async syncActiveSpaceToCloud() {
+    const activeSpace = this.getActiveSpace();
+    if (!this.currentUser || !activeSpace) return;
+
+    const cloudId = await this.ensureCloudSpace(activeSpace);
+    if (!cloudId) return;
+
+    const settings = this.getCurrentSpaceSettings();
+    const { error: updateError } = await supabase
+      .from('music_spaces')
+      .update({
+        name: activeSpace.name,
+        settings,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', cloudId);
+    if (updateError) throw updateError;
+
+    const { error: deleteError } = await supabase
+      .from('space_tracks')
+      .delete()
+      .eq('space_id', cloudId);
+    if (deleteError) throw deleteError;
+
+    const rows = this.cloneTracks(audio.tracks).map((track, index) => ({
+      space_id: cloudId,
+      position: index,
+      name: track.name,
+      artist: track.artist,
+      album: track.album || track.name,
+      duration: track.duration || null,
+      preview_url: track.previewUrl || null,
+      artwork_url: track.artworkUrl || null,
+      itunes_query: track.iTunesQuery || `${track.name} ${track.artist}`,
+      is_custom: Boolean(track.isCustom),
+      metadata: {}
+    }));
+
+    if (rows.length > 0) {
+      const { error: insertError } = await supabase.from('space_tracks').insert(rows);
+      if (insertError) throw insertError;
+    }
   }
 
   renderSpaceSelector() {
@@ -1572,6 +1831,10 @@ class App {
     const spaceSelect = document.getElementById('space-select');
     const btnNewSpace = document.getElementById('btn-new-space');
     const btnClearLibrary = document.getElementById('btn-clear-library');
+    const authModal = document.getElementById('auth-modal');
+    const btnAuthClose = document.getElementById('btn-auth-close');
+    const authForm = document.getElementById('auth-form');
+    const btnAuthLogin = document.getElementById('btn-auth-login');
     
     if (btnToggleLib) {
       btnToggleLib.addEventListener('click', () => {
@@ -1618,6 +1881,27 @@ class App {
       });
     }
 
+    if (btnAuthClose) {
+      btnAuthClose.addEventListener('click', () => this.hideAuthModal());
+    }
+
+    if (authModal) {
+      authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) this.hideAuthModal();
+      });
+    }
+
+    if (authForm) {
+      authForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleAuthSubmit('signup');
+      });
+    }
+
+    if (btnAuthLogin) {
+      btnAuthLogin.addEventListener('click', () => this.handleAuthSubmit('login'));
+    }
+
         // Add Custom Song Panel Show/Hide
     const btnAddSong = document.getElementById('btn-add-song');
     const btnCancelAdd = document.getElementById('btn-cancel-add');
@@ -1625,6 +1909,13 @@ class App {
     
     if (btnAddSong && addSongContainer) {
       btnAddSong.addEventListener('click', () => {
+        if (hud?.classList.contains('sidebar-collapsed')) {
+          hud.classList.remove('sidebar-collapsed');
+          addSongContainer.classList.remove('hidden');
+          setTimeout(() => this.onWindowResize(), 310);
+          return;
+        }
+
         addSongContainer.classList.toggle('hidden');
       });
     }
@@ -1760,9 +2051,11 @@ class App {
       const artist = artistInput.value.trim();
       
       if (title && artist) {
-        this.addSongToLibrary(title, artist);
-        titleInput.value = '';
-        artistInput.value = '';
+        const addedIndex = this.addSongToLibrary(title, artist);
+        if (addedIndex !== null) {
+          titleInput.value = '';
+          artistInput.value = '';
+        }
       }
     });
     
@@ -2331,6 +2624,9 @@ class App {
     setTimeout(() => {
       const trackInfoEl = document.getElementById('focused-track-info');
       if (trackInfoEl) trackInfoEl.classList.add('visible');
+      if (!this.currentUser) {
+        this.showToast(lang.t('try_add_favorite'));
+      }
     }, 600);
     
     // Load real iTunes preview URLs and artwork for default tracks
@@ -2828,7 +3124,12 @@ class App {
   }
 
   // Appends a new song to library and rebuilds the 3D Cover Flow
-  addSongToLibrary(name, artist, artworkUrl = null, previewUrl = null, fileBlob = null) {
+  addSongToLibrary(name, artist, artworkUrl = null, previewUrl = null, fileBlob = null, options = {}) {
+    if (!this.currentUser && !options.skipAuthGate) {
+      this.requireAuthForSave({ name, artist, artworkUrl, previewUrl, fileBlob });
+      return null;
+    }
+
     const newIdx = audio.addTrack(name, artist, artworkUrl, previewUrl, fileBlob);
     this.saveActiveSpace();
     this.rebuildCarousel();
@@ -2837,6 +3138,7 @@ class App {
     this.focusAlbumIndex(newIdx, true);
     this.isZoomed = true;
     this.triggerStarburstWarp();
+    return newIdx;
   }
   
   // Deletes song from library and updates Three.js
