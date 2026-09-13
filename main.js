@@ -97,14 +97,19 @@ class App {
     this.onboardingMode = 'gesture'; // 'gesture' or 'mouse'
 
     // Personal music spaces
+    this.starterSpaceId = 'starter_default_space';
     this.spacesStorageKey = 'cosmic_vinyl_spaces_v1';
     this.activeSpaceStorageKey = 'cosmic_vinyl_active_space_v1';
     this.pendingAddSongStorageKey = 'cosmic_vinyl_pending_add_song_v1';
+    this.starterTracks = this.cloneTracks(audio.tracks);
     this.spaces = [];
     this.activeSpaceId = null;
     this.currentUser = null;
     this.pendingAddSong = null;
     this.cloudSaveTimer = null;
+    this.albumAssetsReady = false;
+    this.albumAssetsPromise = null;
+    this.isEnteringExperience = false;
   }
 
   // Start the application setup
@@ -125,19 +130,21 @@ class App {
       this.setupThree();
       this.createStarfield();
       this.createCarousel();
+      this.focusDefaultEntryTrack();
       this.setupLights();
       // Run loop
       this.animate();
       this.applyCurrentSpaceSettingsToControls();
+      this.prepareAlbumAssets().catch((e) => console.warn('Album assets preload failed:', e));
     } catch (e) {
       console.error("WebGL/Three.js initialization failed:", e);
       const canvas3d = document.getElementById('canvas3d');
       if (canvas3d) canvas3d.style.display = 'none';
     }
 
-    // Initialize bottom player HUD with first track
+    // Initialize bottom player HUD with the default entry track
     try {
-      this.updatePlayingTrackUI(0);
+      this.updatePlayingTrackUI(this.getDefaultEntryTrackIndex());
     } catch (e) {
       console.error("Error updating playing track UI:", e);
     }
@@ -200,8 +207,10 @@ class App {
 
   normalizeSpace(space, index = 0) {
     return {
-      id: space.id || this.generateSpaceId(),
+      id: space.isStarterSpace ? this.starterSpaceId : (space.id || this.generateSpaceId()),
       cloudId: space.cloudId || null,
+      isStarterSpace: Boolean(space.isStarterSpace),
+      isPersonalSpace: Boolean(space.isPersonalSpace),
       name: space.name || (index === 0 ? lang.t('default_space_name') : `Space ${index + 1}`),
       tracks: this.cloneTracks(Array.isArray(space.tracks) ? space.tracks : audio.tracks),
       settings: {
@@ -224,22 +233,32 @@ class App {
 
     if (Array.isArray(savedSpaces) && savedSpaces.length > 0) {
       this.spaces = savedSpaces.map((space, index) => this.normalizeSpace(space, index));
+      if (!this.spaces.some((space) => space.isStarterSpace)) {
+        this.spaces[0].id = this.starterSpaceId;
+        this.spaces[0].isStarterSpace = true;
+        this.spaces[0].name = lang.t('default_space_name');
+      }
+      this.spaces = this.dedupeStarterSpaces(this.spaces);
+      const starterSpace = this.getStarterSpace();
+      if (starterSpace) {
+        starterSpace.name = lang.t('default_space_name');
+        starterSpace.tracks = this.cloneTracks(this.starterTracks);
+      }
     } else {
       const now = new Date().toISOString();
       this.spaces = [{
-        id: this.generateSpaceId(),
+        id: this.starterSpaceId,
+        isStarterSpace: true,
         name: lang.t('default_space_name'),
-        tracks: this.cloneTracks(audio.tracks),
+        tracks: this.cloneTracks(this.starterTracks),
         settings: this.getCurrentSpaceSettings(),
         createdAt: now,
         updatedAt: now
       }];
     }
 
-    const savedActiveId = localStorage.getItem(this.activeSpaceStorageKey);
-    this.activeSpaceId = this.spaces.some((space) => space.id === savedActiveId)
-      ? savedActiveId
-      : this.spaces[0].id;
+    const starterSpace = this.getStarterSpace();
+    this.activeSpaceId = starterSpace?.id || this.spaces[0].id;
 
     const activeSpace = this.getActiveSpace();
     if (activeSpace) {
@@ -252,8 +271,107 @@ class App {
     this.renderSpaceSelector();
   }
 
+  dedupeStarterSpaces(spaces) {
+    let hasStarterSpace = false;
+    return spaces.filter((space) => {
+      const isDefaultNamed = space.name === lang.t('default_space_name') || space.name === 'Public Cosmic Space' || space.name === '公共宇宙空间' || space.name === 'My Cosmic Space' || space.name === '我的宇宙空间';
+      if (space.isStarterSpace || isDefaultNamed) {
+        if (hasStarterSpace) return false;
+        hasStarterSpace = true;
+        space.id = this.starterSpaceId;
+        space.isStarterSpace = true;
+        space.isPersonalSpace = false;
+        space.cloudId = null;
+        space.name = lang.t('default_space_name');
+        space.tracks = this.cloneTracks(this.starterTracks);
+      }
+      return true;
+    });
+  }
+
+  getStarterSpace() {
+    return this.spaces.find((space) => space.isStarterSpace) || null;
+  }
+
   getActiveSpace() {
     return this.spaces.find((space) => space.id === this.activeSpaceId) || this.spaces[0] || null;
+  }
+
+  getDefaultEntryTrackIndex() {
+    const birdsIndex = audio.tracks.findIndex((track) =>
+      track.id === 'birds_of_a_feather' ||
+      track.name?.toLowerCase() === 'birds of a feather'
+    );
+    return birdsIndex >= 0 ? birdsIndex : 0;
+  }
+
+  focusDefaultEntryTrack() {
+    const defaultIndex = this.getDefaultEntryTrackIndex();
+    this.currentRotation = defaultIndex;
+    this.targetRotation = defaultIndex;
+    this.focusedIndex = defaultIndex;
+    this.updateHUDTrackDetails(defaultIndex);
+    this.updateLibraryListUI();
+  }
+
+  setAlbumPreloadUI(isLoading, options = {}) {
+    const { showEntryStatus = false } = options;
+    const selection = document.querySelector('.onboarding-mode-selection');
+    const status = document.getElementById('album-preload-status');
+    const entryStatus = document.getElementById('space-entry-loading');
+    selection?.classList.toggle('is-loading', isLoading);
+    status?.classList.toggle('hidden', !isLoading);
+    entryStatus?.classList.toggle('hidden', !(isLoading && showEntryStatus));
+  }
+
+  loadArtworkTextureForTrack(index, track) {
+    if (!track?.artworkUrl || index >= this.albumGroups.length) return Promise.resolve();
+    if (this.albumCanvasTextures[index] && !this.albumCanvasTextures[index].isProcedural) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.crossOrigin = 'anonymous';
+      textureLoader.load(
+        track.artworkUrl,
+        (loadedTexture) => {
+          loadedTexture.colorSpace = THREE.SRGBColorSpace;
+          this.applyCustomTexture(index, loadedTexture);
+          resolve();
+        },
+        undefined,
+        () => {
+          console.warn(`Album artwork preload failed for ${track.name}`);
+          resolve();
+        }
+      );
+    });
+  }
+
+  prepareAlbumAssets() {
+    if (this.albumAssetsReady) return Promise.resolve();
+    if (this.albumAssetsPromise) return this.albumAssetsPromise;
+
+    this.albumAssetsPromise = (async () => {
+      await audio.loadDefaultTrackData();
+      const artworkTasks = audio.tracks.map((track, index) => this.loadArtworkTextureForTrack(index, track));
+      await Promise.allSettled(artworkTasks);
+      this.albumAssetsReady = true;
+    })();
+
+    return this.albumAssetsPromise;
+  }
+
+  async enterTutorialMode(mode) {
+    this.onboardingMode = mode;
+    this.setAlbumPreloadUI(true);
+    try {
+      await this.prepareAlbumAssets();
+      this.showOnboardingSlide(1);
+    } finally {
+      this.setAlbumPreloadUI(false);
+    }
   }
 
   persistSpaces() {
@@ -382,6 +500,17 @@ class App {
     const pending = this.pendingAddSong;
     this.pendingAddSong = null;
     sessionStorage.removeItem(this.pendingAddSongStorageKey);
+
+    if (pending.targetPersonalSpace) {
+      this.addTrackToPersonalSpace({
+        name: pending.name,
+        artist: pending.artist,
+        artworkUrl: pending.artworkUrl,
+        previewUrl: pending.previewUrl
+      }, { skipAuthGate: true });
+      return;
+    }
+
     this.addSongToLibrary(
       pending.name,
       pending.artist,
@@ -415,47 +544,59 @@ class App {
     }
 
     if (!data || data.length === 0) {
-      await this.syncActiveSpaceToCloud();
+      this.renderSpaceSelector();
       return;
     }
 
-    const cloudSpaces = data.map((space, index) => this.normalizeSpace({
-      id: `cloud_${space.id}`,
-      cloudId: space.id,
-      name: space.name,
-      settings: space.settings || {},
-      createdAt: space.created_at,
-      updatedAt: space.updated_at,
-      tracks: (space.space_tracks || [])
-        .sort((a, b) => (a.position || 0) - (b.position || 0))
-        .map((track) => ({
-          id: track.id,
-          name: track.name,
-          artist: track.artist,
-          album: track.album,
-          duration: track.duration,
-          previewUrl: track.preview_url,
-          artworkUrl: track.artwork_url,
-          iTunesQuery: track.itunes_query,
-          isCustom: track.is_custom
-        }))
-    }, index));
+    const defaultNames = new Set([lang.t('default_space_name'), 'Public Cosmic Space', '公共宇宙空间', 'My Cosmic Space', '我的宇宙空间']);
+    const cloudSpaces = data
+      .filter((space) => !defaultNames.has(space.name))
+      .map((space, index) => this.normalizeSpace({
+        id: `cloud_${space.id}`,
+        cloudId: space.id,
+        name: space.name,
+        isPersonalSpace: space.name === lang.t('personal_space_name'),
+        settings: space.settings || {},
+        createdAt: space.created_at,
+        updatedAt: space.updated_at,
+        tracks: (space.space_tracks || [])
+          .sort((a, b) => (a.position || 0) - (b.position || 0))
+          .map((track) => ({
+            id: track.id,
+            name: track.name,
+            artist: track.artist,
+            album: track.album,
+            duration: track.duration,
+            previewUrl: track.preview_url,
+            artworkUrl: track.artwork_url,
+            iTunesQuery: track.itunes_query,
+            isCustom: track.is_custom
+          }))
+      }, index));
 
-    if (cloudSpaces.length > 0) {
-      this.spaces = cloudSpaces;
-      this.activeSpaceId = cloudSpaces[0].id;
-      const activeSpace = this.getActiveSpace();
-      audio.tracks = this.cloneTracks(activeSpace.tracks);
-      NUM_ALBUMS = audio.tracks.length;
-      this.applySpaceSettings(activeSpace.settings);
-      this.persistSpaces();
-      this.renderSpaceSelector();
-      if (this.scene) {
-        this.albumCanvasTextures = [];
-        this.rebuildCarousel();
-        this.focusAlbumIndex(0, true);
-        this.updatePlayingTrackUI(0);
-      }
+    const starterSpace = this.getStarterSpace() || this.normalizeSpace({
+      id: this.starterSpaceId,
+      isStarterSpace: true,
+      name: lang.t('default_space_name'),
+      tracks: this.starterTracks,
+      settings: this.getCurrentSpaceSettings()
+    });
+    starterSpace.name = lang.t('default_space_name');
+    starterSpace.tracks = this.cloneTracks(this.starterTracks);
+    this.spaces = [starterSpace, ...cloudSpaces];
+    this.activeSpaceId = starterSpace.id;
+    const activeSpace = this.getActiveSpace();
+    audio.tracks = this.cloneTracks(activeSpace.tracks);
+    NUM_ALBUMS = audio.tracks.length;
+    this.applySpaceSettings(activeSpace.settings);
+    this.persistSpaces();
+    this.renderSpaceSelector();
+    if (this.scene) {
+      this.albumCanvasTextures = [];
+      this.rebuildCarousel();
+      const entryIndex = this.getDefaultEntryTrackIndex();
+      this.focusAlbumIndex(entryIndex, true);
+      this.updatePlayingTrackUI(entryIndex);
     }
   }
 
@@ -485,6 +626,7 @@ class App {
   async syncActiveSpaceToCloud() {
     const activeSpace = this.getActiveSpace();
     if (!this.currentUser || !activeSpace) return;
+    if (activeSpace.isStarterSpace) return;
 
     const cloudId = await this.ensureCloudSpace(activeSpace);
     if (!cloudId) return;
@@ -528,22 +670,54 @@ class App {
 
   renderSpaceSelector() {
     const select = document.getElementById('space-select');
+    const currentLabel = document.getElementById('space-select-current');
+    const menu = document.getElementById('space-select-menu');
     if (!select) return;
 
     select.innerHTML = '';
+    if (menu) menu.innerHTML = '';
+
     this.spaces.forEach((space) => {
       const option = document.createElement('option');
       option.value = space.id;
       option.textContent = space.name;
       option.selected = space.id === this.activeSpaceId;
       select.appendChild(option);
+
+      if (menu) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = `space-select-option${space.id === this.activeSpaceId ? ' active' : ''}`;
+        item.textContent = space.name;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', space.id === this.activeSpaceId ? 'true' : 'false');
+        item.addEventListener('click', () => {
+          this.closeSpaceMenu();
+          this.switchSpace(space.id);
+        });
+        menu.appendChild(item);
+      }
     });
+
+    const activeSpace = this.getActiveSpace();
+    if (currentLabel && activeSpace) {
+      currentLabel.textContent = activeSpace.name;
+    }
+  }
+
+  closeSpaceMenu() {
+    const shell = document.querySelector('.space-select-shell');
+    const menu = document.getElementById('space-select-menu');
+    const trigger = document.getElementById('space-select-trigger');
+    shell?.classList.remove('open');
+    menu?.classList.add('hidden');
+    trigger?.setAttribute('aria-expanded', 'false');
   }
 
   createNewSpace() {
     this.saveActiveSpace();
 
-    const fallbackName = lang.t('default_space_name');
+    const fallbackName = lang.t('personal_space_name');
     const name = window.prompt(lang.t('new_space_prompt'), fallbackName);
     if (name === null) return;
 
@@ -563,6 +737,81 @@ class App {
     this.showToast(lang.t('space_created'));
   }
 
+  getOrCreatePersonalSpace() {
+    let personalSpace = this.spaces.find((space) => space.isPersonalSpace);
+    if (personalSpace) return personalSpace;
+
+    const now = new Date().toISOString();
+    personalSpace = this.normalizeSpace({
+      id: this.generateSpaceId(),
+      isPersonalSpace: true,
+      name: lang.t('personal_space_name'),
+      tracks: [],
+      settings: this.getCurrentSpaceSettings(),
+      createdAt: now,
+      updatedAt: now
+    }, this.spaces.length);
+
+    const starterIndex = this.spaces.findIndex((space) => space.isStarterSpace);
+    const insertIndex = starterIndex >= 0 ? starterIndex + 1 : this.spaces.length;
+    this.spaces.splice(insertIndex, 0, personalSpace);
+    this.persistSpaces();
+    this.renderSpaceSelector();
+    return personalSpace;
+  }
+
+  addTrackToPersonalSpace(track, options = {}) {
+    if (!this.currentUser && !options.skipAuthGate) {
+      this.requireAuthForSave({
+        name: track.name,
+        artist: track.artist,
+        artworkUrl: track.artworkUrl || null,
+        previewUrl: track.previewUrl || null,
+        targetPersonalSpace: true
+      });
+      return null;
+    }
+
+    const personalSpace = this.getOrCreatePersonalSpace();
+    const exists = personalSpace.tracks.some((item) =>
+      (item.id && track.id && item.id === track.id) ||
+      (item.name === track.name && item.artist === track.artist)
+    );
+
+    if (!exists) {
+      personalSpace.tracks.push({
+        ...this.cloneTracks([track])[0],
+        id: track.id || `saved_${Date.now()}`
+      });
+      personalSpace.updatedAt = new Date().toISOString();
+    }
+
+    this.activeSpaceId = personalSpace.id;
+    audio.pause();
+    audio.tracks = this.cloneTracks(personalSpace.tracks);
+    NUM_ALBUMS = audio.tracks.length;
+    this.albumCanvasTextures = [];
+    this.currentRotation = 0;
+    this.targetRotation = 0;
+    this.focusedIndex = Math.max(0, audio.tracks.findIndex((item) => item.name === track.name && item.artist === track.artist));
+    this.isZoomed = false;
+    this.applySpaceSettings(personalSpace.settings);
+    this.persistSpaces();
+    this.renderSpaceSelector();
+
+    if (this.scene) {
+      this.rebuildCarousel();
+      this.focusAlbumIndex(this.focusedIndex, true);
+    }
+
+    this.updatePlayingTrackUI(this.focusedIndex);
+    this.applyCurrentSpaceSettingsToControls();
+    this.scheduleCloudSave();
+    this.showToast(lang.t('saved_to_my_space'));
+    this.updateSaveNudge();
+    return this.focusedIndex;
+  }
+
   switchSpace(spaceId, options = {}) {
     const { saveCurrent = true } = options;
     const nextSpace = this.spaces.find((space) => space.id === spaceId);
@@ -577,18 +826,19 @@ class App {
     audio.tracks = this.cloneTracks(nextSpace.tracks);
     NUM_ALBUMS = audio.tracks.length;
     this.albumCanvasTextures = [];
-    this.currentRotation = 0;
-    this.targetRotation = 0;
-    this.focusedIndex = 0;
+    const entryIndex = nextSpace.isStarterSpace ? this.getDefaultEntryTrackIndex() : 0;
+    this.currentRotation = entryIndex;
+    this.targetRotation = entryIndex;
+    this.focusedIndex = entryIndex;
     this.isZoomed = false;
     this.applySpaceSettings(nextSpace.settings);
 
     if (this.scene) {
       this.rebuildCarousel();
-      this.focusAlbumIndex(0, true);
+      this.focusAlbumIndex(entryIndex, true);
     }
 
-    this.updatePlayingTrackUI(0);
+    this.updatePlayingTrackUI(entryIndex);
     this.applyCurrentSpaceSettingsToControls();
     this.persistSpaces();
     this.renderSpaceSelector();
@@ -632,6 +882,24 @@ class App {
     this.toastTimer = setTimeout(() => {
       toast.classList.remove('visible');
     }, 2200);
+  }
+
+  shouldShowSaveNudge() {
+    const activeSpace = this.getActiveSpace();
+    return Boolean(activeSpace?.isStarterSpace && audio.tracks[this.focusedIndex]);
+  }
+
+  updateSaveNudge() {
+    const nudge = document.getElementById('save-space-nudge');
+    if (!nudge) return;
+    nudge.classList.toggle('hidden', !this.shouldShowSaveNudge());
+  }
+
+  saveFocusedTrackToPersonalSpace() {
+    const track = audio.tracks[this.focusedIndex];
+    if (!track) return;
+    this.addTrackToPersonalSpace(track);
+    this.updateSaveNudge();
   }
 
   // Initialize Three.js WebGL Renderer, Scene, Camera
@@ -1316,7 +1584,7 @@ class App {
     }
 
     // Set initial active card display
-    this.updateHUDTrackDetails(0);
+    this.updateHUDTrackDetails(this.focusedIndex);
     this.updateLibraryListUI();
   }
 
@@ -1428,15 +1696,13 @@ class App {
 
     if (btnChooseGesture) {
       btnChooseGesture.addEventListener('click', () => {
-        this.onboardingMode = 'gesture';
-        this.showOnboardingSlide(1);
+        this.enterTutorialMode('gesture');
       });
     }
 
     if (btnChooseMouse) {
       btnChooseMouse.addEventListener('click', () => {
-        this.onboardingMode = 'mouse';
-        this.showOnboardingSlide(1);
+        this.enterTutorialMode('mouse');
       });
     }
 
@@ -1829,6 +2095,9 @@ class App {
     const btnToggleLib = document.getElementById('btn-toggle-library');
     const btnCloseLib = document.getElementById('btn-close-library');
     const spaceSelect = document.getElementById('space-select');
+    const spaceSelectShell = document.querySelector('.space-select-shell');
+    const spaceSelectTrigger = document.getElementById('space-select-trigger');
+    const spaceSelectMenu = document.getElementById('space-select-menu');
     const btnNewSpace = document.getElementById('btn-new-space');
     const btnClearLibrary = document.getElementById('btn-clear-library');
     const authModal = document.getElementById('auth-modal');
@@ -1853,6 +2122,28 @@ class App {
 
     if (spaceSelect) {
       spaceSelect.addEventListener('change', (e) => this.switchSpace(e.target.value));
+    }
+
+    if (spaceSelectTrigger && spaceSelectMenu && spaceSelectShell) {
+      spaceSelectTrigger.setAttribute('aria-haspopup', 'listbox');
+      spaceSelectTrigger.setAttribute('aria-expanded', 'false');
+      spaceSelectTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !spaceSelectMenu.classList.contains('hidden');
+        spaceSelectShell.classList.toggle('open', !isOpen);
+        spaceSelectMenu.classList.toggle('hidden', isOpen);
+        spaceSelectTrigger.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!spaceSelectShell.contains(e.target)) {
+          this.closeSpaceMenu();
+        }
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') this.closeSpaceMenu();
+      });
     }
 
     if (btnNewSpace) {
@@ -2034,10 +2325,26 @@ class App {
         if (audio.currentTrackIndex !== this.focusedIndex) {
           this.updatePlayingTrackUI(this.focusedIndex);
           audio.play();
+          this.updateSaveNudge();
         } else {
           audio.togglePlay();
+          this.updateSaveNudge();
         }
       });
+    }
+
+    const bannerSaveBtn = document.querySelector('.banner-icon-btn.active');
+    if (bannerSaveBtn) {
+      bannerSaveBtn.setAttribute('title', lang.t('save_to_my_space'));
+      bannerSaveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.saveFocusedTrackToPersonalSpace();
+      });
+    }
+
+    const saveNudgeBtn = document.getElementById('btn-save-nudge');
+    if (saveNudgeBtn) {
+      saveNudgeBtn.addEventListener('click', () => this.saveFocusedTrackToPersonalSpace());
     }
 
     // Add Custom Song Form Submission
@@ -2242,6 +2549,7 @@ class App {
     
     this.focusedIndex = index;
     this.updateHUDTrackDetails(this.focusedIndex);
+    this.updateSaveNudge();
   }
 
   // Toggle Zoom mode
@@ -2572,7 +2880,18 @@ class App {
   }
 
   // Onboarding Start Click Action
-  startExperience(enableWebcam) {
+  async startExperience(enableWebcam) {
+    if (this.isEnteringExperience) return;
+    this.isEnteringExperience = true;
+    this.setAlbumPreloadUI(true, { showEntryStatus: true });
+
+    try {
+      await this.prepareAlbumAssets();
+    } finally {
+      this.setAlbumPreloadUI(false, { showEntryStatus: true });
+      this.isEnteringExperience = false;
+    }
+
     // Audio Context initialization
     audio.init();
     
@@ -2595,8 +2914,7 @@ class App {
     
     // Background music initialization based on welcome screen choices
     const toggleBgMusic = document.getElementById('toggle-bg-music');
-    const birdsIndex = audio.tracks.findIndex(t => t.id === 'birds_of_a_feather');
-    const defaultPlayIndex = birdsIndex >= 0 ? birdsIndex : 0;
+    const defaultPlayIndex = this.getDefaultEntryTrackIndex();
     
     if (toggleBgMusic && toggleBgMusic.checked) {
       if (defaultPlayIndex >= 0 && defaultPlayIndex < audio.tracks.length) {
@@ -2624,31 +2942,11 @@ class App {
     setTimeout(() => {
       const trackInfoEl = document.getElementById('focused-track-info');
       if (trackInfoEl) trackInfoEl.classList.add('visible');
+      this.updateSaveNudge();
       if (!this.currentUser) {
         this.showToast(lang.t('try_add_favorite'));
       }
     }, 600);
-    
-    // Load real iTunes preview URLs and artwork for default tracks
-    audio.loadDefaultTrackData((index, track) => {
-      // When iTunes data arrives for a track, load and apply the real artwork texture
-      if (track.artworkUrl && index < this.albumGroups.length) {
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.crossOrigin = 'anonymous';
-        textureLoader.load(
-          track.artworkUrl,
-          (loadedTexture) => {
-            loadedTexture.colorSpace = THREE.SRGBColorSpace;
-            this.applyCustomTexture(index, loadedTexture);
-            console.log(`Applied iTunes artwork for track ${index}: ${track.name}`);
-          },
-          undefined,
-          () => {
-            console.warn(`Failed to load artwork for track ${index}: ${track.name}`);
-          }
-        );
-      }
-    });
   }
 
   // --- ANIMATION LOOP & PHYSICS UPDATES ---
@@ -3047,6 +3345,8 @@ class App {
     }
     
     listContainer.innerHTML = '';
+    const activeSpace = this.getActiveSpace();
+    const showSaveToPersonal = !activeSpace?.isPersonalSpace;
     
     audio.tracks.forEach((track, index) => {
       // Filter matching
@@ -3075,6 +3375,10 @@ class App {
           <span class="library-song-artist">${track.artist}</span>
         </div>
         <div class="library-song-actions">
+          ${showSaveToPersonal ? `
+          <button class="library-song-save-btn" title="${lang.t('save_to_my_space')}">
+            <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </button>` : ''}
           <button class="library-song-play-btn" title="Play Song">
             <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
           </button>
@@ -3086,11 +3390,20 @@ class App {
       
       // Click on item -> focuses and zooms
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.library-song-delete-btn') || e.target.closest('.library-song-play-btn')) return;
+        if (e.target.closest('.library-song-delete-btn') || e.target.closest('.library-song-play-btn') || e.target.closest('.library-song-save-btn')) return;
         this.focusAlbumIndex(index, true);
         this.isZoomed = true;
         this.triggerStarburstWarp();
+        this.updateSaveNudge();
       });
+
+      const saveBtn = item.querySelector('.library-song-save-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.addTrackToPersonalSpace(track);
+        });
+      }
       
       item.querySelector('.library-song-play-btn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3099,6 +3412,7 @@ class App {
         audio.play();
         this.isZoomed = true;
         this.triggerStarburstWarp();
+        this.updateSaveNudge();
       });
       
       item.querySelector('.library-song-delete-btn').addEventListener('click', (e) => {

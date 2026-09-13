@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Vinyl - 3D Gesture Audio Gallery</title>
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
   <script>
     window.addEventListener('error', function(e) {
       if (!new URLSearchParams(window.location.search).has('debug')) return;
@@ -162,8 +164,12 @@
           <div class="space-select-row">
             <div class="space-select-shell">
               <span class="space-select-orbit" aria-hidden="true"></span>
-              <select id="space-select" class="space-select" title="Switch Music Space" data-i18n-title="switch_space_title"></select>
+              <button id="space-select-trigger" class="space-select-trigger" type="button" title="Switch Music Space" data-i18n-title="switch_space_title">
+                <span id="space-select-current">Public Cosmic Space</span>
+              </button>
+              <select id="space-select" class="space-select native-space-select" title="Switch Music Space" data-i18n-title="switch_space_title"></select>
               <span class="space-select-chevron" aria-hidden="true"></span>
+              <div id="space-select-menu" class="space-select-menu hidden" role="listbox" aria-label="Music Spaces"></div>
             </div>
             <button id="btn-new-space" class="sidebar-action-btn space-create-btn" title="New Music Space" data-i18n-title="new_space_title">
               <svg viewBox="0 0 24 24" width="15" height="15">
@@ -297,7 +303,17 @@
           <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
         </button>
       </div>
-      <!-- Bottom Controls Panel (Spotify Player Style) -->
+    </div>
+
+    <div id="save-space-nudge" class="save-space-nudge glass hidden">
+      <div>
+        <span class="save-space-title" data-i18n="save_prompt_title">Make this yours</span>
+        <span class="save-space-copy" data-i18n="save_prompt_body">Add this track to your own music space.</span>
+      </div>
+      <button id="btn-save-nudge" class="save-space-btn" type="button" data-i18n="save_prompt_action">Add to My Space</button>
+    </div>
+
+    <!-- Bottom Controls Panel (Spotify Player Style) -->
     <footer class="hud-player glass">
       <!-- Music Info -->
       <div class="player-info">
@@ -438,7 +454,7 @@
           <h2 class="title-main">COSMIC VINYL</h2>
           <h3 class="subtitle-sub" data-i18n="audio_gallery_sub">3D AUDIO GALLERY</h3>
         </div>
-        <div class="onboarding-desc" style="display: flex; flex-direction: column; gap: 8px; font-size: 11.5px; line-height: 1.6; color: var(--text-secondary);">
+        <div class="onboarding-desc">
           <div data-i18n="welcome_desc_line1">Welcome to Cosmic Vinyl!</div>
           <div data-i18n="welcome_desc_line2">A 3D audio space controlled by hand gestures.</div>
           <div data-i18n="welcome_desc_line3">We recommend using a camera to experience finger-guided flying interactions.</div>
@@ -465,6 +481,10 @@
           <button id="btn-choose-mouse" class="start-btn secondary">
             <span style="vertical-align: middle;" data-i18n="browse_with_mouse">BROWSE WITH MOUSE & KEYS</span>
           </button>
+          <div id="album-preload-status" class="album-preload-status hidden">
+            <span class="album-preload-spinner" aria-hidden="true"></span>
+            <span data-i18n="loading_albums">Preparing album covers...</span>
+          </div>
         </div>
       </div>
 
@@ -517,7 +537,11 @@
       </div>
 
       <!-- Final Action button (hidden initially, shown on slide 4) -->
-      <button id="btn-start" class="start-btn hidden" style="width: 100%; margin: 10px 0 0 0;" data-i18n="start_gesture_mode">START GESTURE MODE</button>
+      <button id="btn-start" class="start-btn tutorial-start-btn hidden" data-i18n="start_gesture_mode">START GESTURE MODE</button>
+      <div id="space-entry-loading" class="space-entry-loading hidden">
+        <span class="album-preload-spinner" aria-hidden="true"></span>
+        <span data-i18n="loading_albums">Loading your music universe...</span>
+      </div>
 
     </div>
   </div>
