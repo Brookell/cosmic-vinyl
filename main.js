@@ -398,12 +398,14 @@ class App {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
       this.currentUser = data.session?.user || null;
+      this.updateAuthEntryUI();
       if (this.currentUser) {
         await this.loadCloudSpaces();
       }
 
       supabase.auth.onAuthStateChange(async (_event, session) => {
         this.currentUser = session?.user || null;
+        this.updateAuthEntryUI();
         if (this.currentUser) {
           await this.loadCloudSpaces();
           await this.consumePendingAddSong();
@@ -412,6 +414,18 @@ class App {
     } catch (e) {
       console.warn('Supabase auth initialization failed:', e);
     }
+  }
+
+  updateAuthEntryUI() {
+    const button = document.getElementById('btn-auth-entry');
+    const text = document.getElementById('auth-entry-text');
+    if (!button || !text) return;
+
+    const isSignedIn = Boolean(this.currentUser);
+    button.classList.toggle('is-signed-in', isSignedIn);
+    button.setAttribute('aria-pressed', isSignedIn ? 'true' : 'false');
+    button.title = isSignedIn ? lang.t('auth_synced') : lang.t('auth_entry');
+    text.textContent = isSignedIn ? lang.t('auth_synced') : lang.t('auth_entry');
   }
 
   requireAuthForSave(pendingSong) {
@@ -786,14 +800,19 @@ class App {
       personalSpace.updatedAt = new Date().toISOString();
     }
 
+    const savedTrackIndex = Math.max(0, personalSpace.tracks.findIndex((item) =>
+      (item.id && track.id && item.id === track.id) ||
+      (item.name === track.name && item.artist === track.artist)
+    ));
+
     this.activeSpaceId = personalSpace.id;
     audio.pause();
     audio.tracks = this.cloneTracks(personalSpace.tracks);
     NUM_ALBUMS = audio.tracks.length;
     this.albumCanvasTextures = [];
-    this.currentRotation = 0;
-    this.targetRotation = 0;
-    this.focusedIndex = Math.max(0, audio.tracks.findIndex((item) => item.name === track.name && item.artist === track.artist));
+    this.currentRotation = savedTrackIndex;
+    this.targetRotation = savedTrackIndex;
+    this.focusedIndex = savedTrackIndex;
     this.isZoomed = false;
     this.applySpaceSettings(personalSpace.settings);
     this.persistSpaces();
@@ -806,6 +825,8 @@ class App {
 
     this.updatePlayingTrackUI(this.focusedIndex);
     this.applyCurrentSpaceSettingsToControls();
+    this.updateLibraryListUI();
+    this.updateLibraryHighlight(this.focusedIndex);
     this.scheduleCloudSave();
     this.showToast(lang.t('saved_to_my_space'));
     this.updateSaveNudge();
@@ -1843,6 +1864,7 @@ class App {
         startBtn.textContent = this.isReplayingTutorial ? lang.t('close_guide') : lang.t('start_gesture_mode');
         startBtn.setAttribute('data-i18n', this.isReplayingTutorial ? 'close_guide' : 'start_gesture_mode');
       }
+      this.updateAuthEntryUI();
     });
 
     // Header Tutorial button Action
@@ -1893,30 +1915,6 @@ class App {
     if (btnModeMouse && btnModeGesture) {
       btnModeMouse.addEventListener('click', () => this.setControlMode('mouse'));
       btnModeGesture.addEventListener('click', () => this.setControlMode('gesture'));
-    }
-
-    // Settings Panel Toggle
-    const settingsPanel = document.getElementById('settings-panel');
-    const btnToggleSettings = document.getElementById('btn-toggle-settings');
-    if (btnToggleSettings && settingsPanel) {
-      btnToggleSettings.addEventListener('click', (e) => {
-        e.stopPropagation();
-        settingsPanel.classList.toggle('collapsed');
-      });
-      document.addEventListener('click', (e) => {
-        if (!settingsPanel.contains(e.target) && !settingsPanel.classList.contains('collapsed')) {
-          settingsPanel.classList.add('collapsed');
-        }
-      });
-    }
-
-    // Replay Tutorial button
-    const btnReplayTutorial = document.getElementById('btn-replay-tutorial');
-    if (btnReplayTutorial) {
-      btnReplayTutorial.addEventListener('click', () => {
-        if (settingsPanel) settingsPanel.classList.add('collapsed');
-        this.openGuideModeChooser();
-      });
     }
 
     // Settings Controls
@@ -2104,6 +2102,7 @@ class App {
     const btnAuthClose = document.getElementById('btn-auth-close');
     const authForm = document.getElementById('auth-form');
     const btnAuthLogin = document.getElementById('btn-auth-login');
+    const btnAuthEntry = document.getElementById('btn-auth-entry');
     
     if (btnToggleLib) {
       btnToggleLib.addEventListener('click', () => {
@@ -2193,6 +2192,16 @@ class App {
       btnAuthLogin.addEventListener('click', () => this.handleAuthSubmit('login'));
     }
 
+    if (btnAuthEntry) {
+      btnAuthEntry.addEventListener('click', () => {
+        if (this.currentUser) {
+          this.showToast(lang.t('auth_synced'));
+          return;
+        }
+        this.showAuthModal(lang.t('auth_entry_message'));
+      });
+    }
+
         // Add Custom Song Panel Show/Hide
     const btnAddSong = document.getElementById('btn-add-song');
     const btnCancelAdd = document.getElementById('btn-cancel-add');
@@ -2214,28 +2223,6 @@ class App {
     if (btnCancelAdd && addSongContainer) {
       btnCancelAdd.addEventListener('click', () => {
         addSongContainer.classList.add('hidden');
-      });
-    }
-
-    // Panel Mode Selection Toggles
-    const btnModeSearch = document.getElementById('btn-mode-search');
-    const btnModeManual = document.getElementById('btn-mode-manual');
-    const modeSearchContainer = document.getElementById('mode-search-container');
-    const modeManualContainer = document.getElementById('mode-manual-container');
-
-    if (btnModeSearch && btnModeManual && modeSearchContainer && modeManualContainer) {
-      btnModeSearch.addEventListener('click', () => {
-        btnModeSearch.classList.add('active');
-        btnModeManual.classList.remove('active');
-        modeSearchContainer.classList.remove('hidden');
-        modeManualContainer.classList.add('hidden');
-      });
-
-      btnModeManual.addEventListener('click', () => {
-        btnModeManual.classList.add('active');
-        btnModeSearch.classList.remove('active');
-        modeManualContainer.classList.remove('hidden');
-        modeSearchContainer.classList.add('hidden');
       });
     }
 
@@ -2347,25 +2334,6 @@ class App {
       saveNudgeBtn.addEventListener('click', () => this.saveFocusedTrackToPersonalSpace());
     }
 
-    // Add Custom Song Form Submission
-    const addSongForm = document.getElementById('add-song-form');
-    addSongForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const titleInput = document.getElementById('custom-song-title');
-      const artistInput = document.getElementById('custom-song-artist');
-      
-      const title = titleInput.value.trim();
-      const artist = artistInput.value.trim();
-      
-      if (title && artist) {
-        const addedIndex = this.addSongToLibrary(title, artist);
-        if (addedIndex !== null) {
-          titleInput.value = '';
-          artistInput.value = '';
-        }
-      }
-    });
-    
     // Bind Gesture System callbacks
     gestures.onSwipeCallback = (vx) => this.handleGestureSwipe(vx);
     gestures.onPinchCallback = (isPinching, pos) => this.handleGesturePinch(isPinching, pos);

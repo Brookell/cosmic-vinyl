@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN" data-lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Vinyl - 3D Gesture Audio Gallery</title>
+  <title>Cosmic Vinyl - 3D 音乐画廊</title>
   <link rel="icon" type="image/png" href="assets/app-icon.png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
   <script>
@@ -114,7 +114,11 @@
           <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align: middle;">
             <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.39 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.39-1.63-4.33-3.56zm2.95-8H5.08c.94-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.66.07-1.34.16-2h4.68c.09.66.16 1.34.16 2 0 .66-.07 1.34-.16 2zm.28 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.94 1.93-2.49 3.14-4.33 3.56zm1.76-5.56c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
           </svg>
-          <span id="lang-toggle-text">EN</span>
+          <span id="lang-toggle-text">中文</span>
+        </button>
+        <button id="btn-auth-entry" class="auth-entry-btn" type="button" title="登录保存空间" data-i18n-title="auth_entry">
+          <span class="auth-entry-dot" aria-hidden="true"></span>
+          <span id="auth-entry-text" data-i18n="auth_entry">登录保存空间</span>
         </button>
         <div class="status-indicator hidden" id="mp-status">
           <span class="dot yellow"></span>
@@ -187,12 +191,6 @@
 
       <!-- Add Song Search & Custom Form Panel inside Sidebar -->
       <div id="add-song-container" class="add-song-panel hidden">
-        <div class="panel-mode-selector">
-          <button id="btn-mode-search" class="mode-btn active" type="button" data-i18n="search_online">Search Online</button>
-          <button id="btn-mode-manual" class="mode-btn" type="button" data-i18n="custom_manual">Custom Manual</button>
-        </div>
-        
-        <!-- Mode 1: Search Online -->
         <div id="mode-search-container" class="mode-container">
           <div class="search-input-wrapper" style="margin-bottom: 0;">
             <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14">
@@ -201,19 +199,6 @@
             <input type="text" id="sidebar-song-search" placeholder="Search songs..." data-i18n-placeholder="search_songs" autocomplete="off">
           </div>
           <div id="sidebar-search-results" class="sidebar-search-results-list"></div>
-        </div>
-
-        <!-- Mode 2: Custom Manual Form -->
-        <div id="mode-manual-container" class="mode-container hidden">
-          <form id="add-song-form" onsubmit="event.preventDefault();">
-            <div class="form-group" style="margin-bottom: 6px;">
-              <input type="text" id="custom-song-title" placeholder="Song Title" data-i18n-placeholder="song_title" required autocomplete="off">
-            </div>
-            <div class="form-group" style="margin-bottom: 8px;">
-              <input type="text" id="custom-song-artist" placeholder="Artist Name" data-i18n-placeholder="artist_name" required autocomplete="off">
-            </div>
-            <button type="submit" class="form-submit-btn" style="width: 100%;" data-i18n="add_to_gallery">Add to Gallery</button>
-          </form>
         </div>
 
         <div class="panel-footer-actions" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; display: flex; justify-content: flex-end;">
@@ -305,12 +290,15 @@
       </div>
     </div>
 
-    <div id="save-space-nudge" class="save-space-nudge glass hidden">
-      <div>
+    <div id="save-space-nudge" class="save-space-nudge hidden">
+      <button id="btn-save-nudge" class="save-space-btn" type="button" aria-label="Add to My Space">
+        <span class="save-space-plus" aria-hidden="true"></span>
+      </button>
+      <div class="save-space-details glass">
         <span class="save-space-title" data-i18n="save_prompt_title">Make this yours</span>
         <span class="save-space-copy" data-i18n="save_prompt_body">Add this track to your own music space.</span>
+        <span class="save-space-action-copy" data-i18n="save_prompt_action">Add to My Space</span>
       </div>
-      <button id="btn-save-nudge" class="save-space-btn" type="button" data-i18n="save_prompt_action">Add to My Space</button>
     </div>
 
     <!-- Bottom Controls Panel (Spotify Player Style) -->
@@ -377,42 +365,20 @@
       </div>
     </footer>
  
-    <!-- Settings Panel (Visual Customizer) -->
-    <div id="settings-panel" class="glass collapsed">
-      <button id="btn-toggle-settings" class="settings-toggle-btn" title="Toggle Settings" data-i18n-title="visual_settings">
-        <svg viewBox="0 0 24 24" width="18" height="18">
-          <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-        </svg>
-      </button>
-      <div class="settings-content">
-        <h3 data-i18n="visual_settings">VISUAL SETTINGS</h3>
-        <div class="settings-group">
-          <label for="setting-brightness">BG Brightness: <span id="brightness-val">20%</span></label>
-          <input type="range" id="setting-brightness" min="0" max="100" step="5" value="20">
-        </div>
-        <div class="settings-group">
-          <label for="setting-scene-brightness">Artwork Brightness: <span id="scene-brightness-val">2.5x</span></label>
-          <input type="range" id="setting-scene-brightness" min="5" max="25" step="1" value="25">
-        </div>
-        <div class="settings-group" style="margin-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 15px; margin-bottom: 0;">
-          <button id="btn-replay-tutorial" class="start-btn secondary" style="width: 100%; padding: 10px 16px; font-size: 11px; margin: 0; border-color: rgba(255,255,255,0.12);" data-i18n="replay_tutorial">Replay Gesture Guide</button>
-        </div>
-    </div>
   </div>
-</div>
 
   <div id="auth-modal" class="auth-modal hidden" aria-hidden="true">
     <div class="auth-card glass">
-      <button id="btn-auth-close" class="auth-close-btn" type="button" aria-label="Close">×</button>
-      <div class="auth-kicker" data-i18n="auth_kicker">SAVE YOUR SPACE</div>
-      <h2 data-i18n="auth_title">Create your music space</h2>
-      <p data-i18n="auth_desc">Sign up to save favorite songs into your own Cosmic Vinyl library.</p>
+      <button id="btn-auth-close" class="auth-close-btn" type="button" aria-label="关闭">×</button>
+      <div class="auth-kicker" data-i18n="auth_kicker">保存你的空间</div>
+      <h2 data-i18n="auth_title">创建你的音乐空间</h2>
+      <p data-i18n="auth_desc">注册后即可把喜欢的歌曲保存到自己的 Cosmic Vinyl 资料库。</p>
       <form id="auth-form" class="auth-form">
-        <input id="auth-email" type="email" autocomplete="email" placeholder="Email" data-i18n-placeholder="auth_email_placeholder" required>
-        <input id="auth-password" type="password" autocomplete="current-password" placeholder="Password" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
+        <input id="auth-email" type="email" autocomplete="email" placeholder="邮箱" data-i18n-placeholder="auth_email_placeholder" required>
+        <input id="auth-password" type="password" autocomplete="current-password" placeholder="密码" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
         <div id="auth-message" class="auth-message"></div>
-        <button id="btn-auth-signup" class="auth-primary-btn" type="submit" data-i18n="auth_signup">Create account and save</button>
-        <button id="btn-auth-login" class="auth-secondary-btn" type="button" data-i18n="auth_login">I already have an account</button>
+        <button id="btn-auth-signup" class="auth-primary-btn" type="submit" data-i18n="auth_signup">注册并保存</button>
+        <button id="btn-auth-login" class="auth-secondary-btn" type="button" data-i18n="auth_login">我已有账号</button>
       </form>
     </div>
   </div>
@@ -442,32 +408,32 @@
         <svg viewBox="0 0 24 24" width="12" height="12" style="vertical-align: middle;">
           <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.42 3.39 1.63 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.42-3.39-1.63-4.33-3.56zm2.95-8H5.08c.94-1.93 2.49-3.14 4.33-3.56-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.66.07-1.34.16-2h4.68c.09.66.16 1.34.16 2 0 .66-.07 1.34-.16 2zm.28 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.94 1.93-2.49 3.14-4.33 3.56zm1.76-5.56c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
         </svg>
-        <span id="lang-toggle-onboarding-text">EN</span>
+        <span id="lang-toggle-onboarding-text">中文</span>
       </button>
 
       <!-- Skip Tutorial button -->
-      <button id="btn-skip-tutorial" class="skip-btn hidden" data-i18n="skip_guide">SKIP GUIDE</button>
+      <button id="btn-skip-tutorial" class="skip-btn hidden" data-i18n="skip_guide">跳过引导</button>
 
       <!-- Welcome Slide (Slide 0) -->
       <div class="onboarding-slide active" data-slide="0">
         <div class="onboarding-logo-area">
           <h2 class="title-main">COSMIC VINYL</h2>
-          <h3 class="subtitle-sub" data-i18n="audio_gallery_sub">3D AUDIO GALLERY</h3>
+          <h3 class="subtitle-sub" data-i18n="audio_gallery_sub">3D 音乐画廊</h3>
         </div>
         <div class="onboarding-desc">
-          <div data-i18n="welcome_desc_line1">Welcome to Cosmic Vinyl!</div>
-          <div data-i18n="welcome_desc_line2">A 3D audio space controlled by hand gestures.</div>
-          <div data-i18n="welcome_desc_line3">We recommend using a camera to experience finger-guided flying interactions.</div>
+          <div data-i18n="welcome_desc_line1">欢迎来到 Cosmic Vinyl！</div>
+          <div data-i18n="welcome_desc_line2">这是一个通过手势控制的 3D 音乐空间。</div>
+          <div data-i18n="welcome_desc_line3">我们推荐您开启摄像头来体验手指引导的飞行交互效果。</div>
         </div>
         
         <!-- Background Music Selector (Styled as a gorgeous 3D card) -->
         <input type="checkbox" id="toggle-bg-music" checked style="display: none;">
         <div class="music-toggle-card glass checked" id="toggle-bg-music-btn" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; border-radius: 14px; width: 100%; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 6px 20px rgba(0,240,255,0.02); margin: 15px 0;">
           <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
-            <span style="font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-cyan);" data-i18n="bg_music_toggle">BACKGROUND MUSIC</span>
+            <span style="font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-cyan);" data-i18n="bg_music_toggle">背景音乐</span>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);" id="bg-music-status-text" data-i18n="enabled_yes">Yes</span>
+            <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);" id="bg-music-status-text" data-i18n="enabled_yes">有</span>
             <div class="custom-switch-track" style="width: 44px; height: 24px; background: rgba(255,255,255,0.08); border-radius: 12px; position: relative; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease;">
               <div class="custom-switch-thumb" style="width: 18px; height: 18px; background: var(--accent-cyan); border-radius: 50%; position: absolute; top: 2px; left: 22px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 0 10px var(--accent-cyan);"></div>
             </div>
@@ -476,14 +442,14 @@
 
         <div class="onboarding-mode-selection">
           <button id="btn-choose-gesture" class="start-btn">
-            <span style="vertical-align: middle;" data-i18n="enable_camera_gestures">ENABLE CAMERA GESTURES</span>
+            <span style="vertical-align: middle;" data-i18n="enable_camera_gestures">启用摄像头手势</span>
           </button>
           <button id="btn-choose-mouse" class="start-btn secondary">
-            <span style="vertical-align: middle;" data-i18n="browse_with_mouse">BROWSE WITH MOUSE & KEYS</span>
+            <span style="vertical-align: middle;" data-i18n="browse_with_mouse">使用鼠标与键盘浏览</span>
           </button>
           <div id="album-preload-status" class="album-preload-status hidden">
             <span class="album-preload-spinner" aria-hidden="true"></span>
-            <span data-i18n="loading_albums">Preparing album covers...</span>
+            <span data-i18n="loading_albums">音乐世界加载中...</span>
           </div>
         </div>
       </div>

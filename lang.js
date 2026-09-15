@@ -41,6 +41,9 @@ const translations = {
     auth_password_placeholder: "Password",
     auth_signup: "Create account and save",
     auth_login: "I already have an account",
+    auth_entry: "Sign in to save",
+    auth_synced: "Space synced",
+    auth_entry_message: "Sign in to create your own music space and keep favorite songs.",
     auth_required_message: "Create an account first, then this song will be saved into your space.",
     auth_signing_in: "Signing you in...",
     auth_check_email: "Check your email to confirm your account, then return here to save.",
@@ -50,11 +53,7 @@ const translations = {
     all: "All",
     gestures: "Gestures",
     search_online: "Search Online",
-    custom_manual: "Custom Manual",
     search_songs: "Search songs...",
-    song_title: "Song Title",
-    artist_name: "Artist Name",
-    add_to_gallery: "Add to Gallery",
     close_panel: "Close Panel",
     open_palm: "OPEN PALM",
     open_palm_desc: "Fast slide left/right to view albums",
@@ -172,6 +171,9 @@ const translations = {
     auth_password_placeholder: "密码",
     auth_signup: "注册并保存",
     auth_login: "我已有账号",
+    auth_entry: "登录保存空间",
+    auth_synced: "空间已同步",
+    auth_entry_message: "登录后即可创建自己的音乐空间，并保存喜欢的歌曲。",
     auth_required_message: "先注册/登录，这首歌会自动保存进你的空间。",
     auth_signing_in: "正在登录...",
     auth_check_email: "请先去邮箱确认账号，然后回到这里继续保存。",
@@ -181,11 +183,7 @@ const translations = {
     all: "全部",
     gestures: "手势",
     search_online: "在线搜索",
-    custom_manual: "手动自定义",
     search_songs: "搜索歌曲...",
-    song_title: "歌曲名称",
-    artist_name: "歌手名字",
-    add_to_gallery: "添加到画廊",
     close_panel: "关闭面板",
     open_palm: "张开五指",
     open_palm_desc: "快速左右滑动以浏览专辑",
@@ -267,7 +265,7 @@ const translations = {
 
 class LanguageManager {
   constructor() {
-    this.currentLang = localStorage.getItem('cosmic_vinyl_lang') || 'en';
+    this.currentLang = localStorage.getItem('cosmic_vinyl_lang') || 'zh';
   }
 
   getLanguage() {
