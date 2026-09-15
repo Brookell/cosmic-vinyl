@@ -101,12 +101,16 @@ class App {
     this.spacesStorageKey = 'cosmic_vinyl_spaces_v1';
     this.activeSpaceStorageKey = 'cosmic_vinyl_active_space_v1';
     this.pendingAddSongStorageKey = 'cosmic_vinyl_pending_add_song_v1';
+    this.pendingCreateSpaceStorageKey = 'cosmic_vinyl_pending_create_space_v1';
     this.starterTracks = this.cloneTracks(audio.tracks);
     this.spaces = [];
     this.activeSpaceId = null;
     this.currentUser = null;
     this.pendingAddSong = null;
+    this.pendingCreateSpace = null;
     this.cloudSaveTimer = null;
+    this.saveNudgeHintTimer = null;
+    this.saveNudgeHintShown = false;
     this.albumAssetsReady = false;
     this.albumAssetsPromise = null;
     this.isEnteringExperience = false;
@@ -409,6 +413,7 @@ class App {
         if (this.currentUser) {
           await this.loadCloudSpaces();
           await this.consumePendingAddSong();
+          await this.consumePendingCreateSpace();
         }
       });
     } catch (e) {
@@ -419,13 +424,47 @@ class App {
   updateAuthEntryUI() {
     const button = document.getElementById('btn-auth-entry');
     const text = document.getElementById('auth-entry-text');
+    const shell = document.querySelector('.auth-entry-shell');
+    const menu = document.getElementById('auth-account-menu');
+    const email = document.getElementById('auth-account-email');
     if (!button || !text) return;
 
     const isSignedIn = Boolean(this.currentUser);
     button.classList.toggle('is-signed-in', isSignedIn);
+    shell?.classList.toggle('is-signed-in', isSignedIn);
     button.setAttribute('aria-pressed', isSignedIn ? 'true' : 'false');
-    button.title = isSignedIn ? lang.t('auth_synced') : lang.t('auth_entry');
-    text.textContent = isSignedIn ? lang.t('auth_synced') : lang.t('auth_entry');
+    button.title = isSignedIn ? lang.t('auth_signed_in') : lang.t('auth_entry');
+    text.textContent = isSignedIn ? lang.t('auth_signed_in') : lang.t('auth_entry');
+
+    if (email) {
+      email.textContent = this.currentUser?.email || lang.t('auth_entry');
+    }
+    if (!isSignedIn) {
+      menu?.classList.add('hidden');
+    }
+  }
+
+  toggleAuthAccountMenu() {
+    const menu = document.getElementById('auth-account-menu');
+    if (!menu || !this.currentUser) return;
+    menu.classList.toggle('hidden');
+  }
+
+  closeAuthAccountMenu() {
+    document.getElementById('auth-account-menu')?.classList.add('hidden');
+  }
+
+  async signOutCurrentUser() {
+    try {
+      await supabase.auth.signOut();
+      this.currentUser = null;
+      this.closeAuthAccountMenu();
+      this.updateAuthEntryUI();
+      this.showToast(lang.t('auth_signed_out'));
+    } catch (e) {
+      console.warn('Sign out failed:', e);
+      this.showToast(lang.t('auth_failed'));
+    }
   }
 
   requireAuthForSave(pendingSong) {
@@ -438,9 +477,17 @@ class App {
     this.showAuthModal(lang.t('auth_required_message'));
   }
 
+  requireAuthForSpaceCreation(spaceName) {
+    const pending = { name: spaceName || lang.t('personal_space_name') };
+    this.pendingCreateSpace = pending;
+    sessionStorage.setItem(this.pendingCreateSpaceStorageKey, JSON.stringify(pending));
+    this.showAuthModal(lang.t('auth_entry_message'));
+  }
+
   showAuthModal(message = '') {
     const modal = document.getElementById('auth-modal');
     const messageEl = document.getElementById('auth-message');
+    this.setAuthMode('signup');
     if (messageEl) messageEl.textContent = message;
     if (modal) {
       modal.classList.remove('hidden');
@@ -462,10 +509,41 @@ class App {
     if (messageEl) messageEl.textContent = message;
   }
 
+  setAuthMode(mode = 'signup') {
+    const confirmGroup = document.getElementById('auth-confirm-group');
+    const password = document.getElementById('auth-password');
+    const confirm = document.getElementById('auth-password-confirm');
+    const isLogin = mode === 'login';
+    confirmGroup?.classList.toggle('hidden', isLogin);
+    if (confirm) {
+      confirm.required = !isLogin;
+      if (isLogin) confirm.value = '';
+    }
+    if (password) {
+      password.setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
+    }
+  }
+
+  togglePasswordVisibility(targetId, button) {
+    const input = document.getElementById(targetId);
+    if (!input) return;
+    const shouldShow = input.type === 'password';
+    input.type = shouldShow ? 'text' : 'password';
+    const label = lang.t(shouldShow ? 'auth_hide_password' : 'auth_show_password');
+    button?.setAttribute('aria-label', label);
+    button?.setAttribute('title', label);
+  }
+
   async handleAuthSubmit(mode = 'signup') {
+    this.setAuthMode(mode);
     const email = document.getElementById('auth-email')?.value.trim();
     const password = document.getElementById('auth-password')?.value;
+    const confirmPassword = document.getElementById('auth-password-confirm')?.value;
     if (!email || !password) return;
+    if (mode !== 'login' && password !== confirmPassword) {
+      this.setAuthMessage(lang.t('auth_password_mismatch'));
+      return;
+    }
 
     this.setAuthMessage(lang.t('auth_signing_in'));
     try {
@@ -485,6 +563,7 @@ class App {
         this.hideAuthModal();
         await this.loadCloudSpaces();
         await this.consumePendingAddSong();
+        await this.consumePendingCreateSpace();
         return;
       }
 
@@ -534,6 +613,28 @@ class App {
       { skipAuthGate: true }
     );
     this.showToast(lang.t('auth_saved'));
+  }
+
+  async consumePendingCreateSpace() {
+    if (!this.currentUser) return;
+
+    if (!this.pendingCreateSpace) {
+      const storedPending = sessionStorage.getItem(this.pendingCreateSpaceStorageKey);
+      if (storedPending) {
+        try {
+          this.pendingCreateSpace = JSON.parse(storedPending);
+        } catch (e) {
+          sessionStorage.removeItem(this.pendingCreateSpaceStorageKey);
+        }
+      }
+    }
+
+    if (!this.pendingCreateSpace) return;
+
+    const pending = this.pendingCreateSpace;
+    this.pendingCreateSpace = null;
+    sessionStorage.removeItem(this.pendingCreateSpaceStorageKey);
+    this.confirmCreateNewSpace(pending.name || lang.t('personal_space_name'), { skipAuthGate: true });
   }
 
   scheduleCloudSave() {
@@ -730,12 +831,34 @@ class App {
 
   createNewSpace() {
     this.saveActiveSpace();
-
+    const input = document.getElementById('space-name-input');
+    const modal = document.getElementById('space-name-modal');
     const fallbackName = lang.t('personal_space_name');
-    const name = window.prompt(lang.t('new_space_prompt'), fallbackName);
-    if (name === null) return;
 
+    if (input) {
+      input.value = fallbackName;
+      input.setAttribute('placeholder', lang.t('new_space_placeholder'));
+    }
+
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      setTimeout(() => input?.select(), 0);
+      return;
+    }
+
+    this.confirmCreateNewSpace(fallbackName);
+  }
+
+  confirmCreateNewSpace(name, options = {}) {
+    const fallbackName = lang.t('personal_space_name');
     const trimmedName = name.trim() || fallbackName;
+    if (!this.currentUser && !options.skipAuthGate) {
+      this.hideSpaceNameModal();
+      this.requireAuthForSpaceCreation(trimmedName);
+      return null;
+    }
+
     const now = new Date().toISOString();
     const seedTracks = this.cloneTracks(audio.tracks.slice(0, 1));
     this.spaces.push({
@@ -749,6 +872,15 @@ class App {
 
     this.switchSpace(this.spaces[this.spaces.length - 1].id, { saveCurrent: false });
     this.showToast(lang.t('space_created'));
+    return this.spaces[this.spaces.length - 1];
+  }
+
+  hideSpaceNameModal() {
+    const modal = document.getElementById('space-name-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+    }
   }
 
   getOrCreatePersonalSpace() {
@@ -824,6 +956,9 @@ class App {
     }
 
     this.updatePlayingTrackUI(this.focusedIndex);
+    audio.play();
+    this.isZoomed = true;
+    this.triggerStarburstWarp();
     this.applyCurrentSpaceSettingsToControls();
     this.updateLibraryListUI();
     this.updateLibraryHighlight(this.focusedIndex);
@@ -914,6 +1049,17 @@ class App {
     const nudge = document.getElementById('save-space-nudge');
     if (!nudge) return;
     nudge.classList.toggle('hidden', !this.shouldShowSaveNudge());
+  }
+
+  revealSaveNudgeHint() {
+    const nudge = document.getElementById('save-space-nudge');
+    if (!nudge || !this.shouldShowSaveNudge()) return;
+    nudge.classList.remove('hidden');
+    nudge.classList.add('is-hinting');
+    clearTimeout(this.saveNudgeHintTimer);
+    this.saveNudgeHintTimer = setTimeout(() => {
+      nudge.classList.remove('is-hinting');
+    }, 5200);
   }
 
   saveFocusedTrackToPersonalSpace() {
@@ -2103,6 +2249,14 @@ class App {
     const authForm = document.getElementById('auth-form');
     const btnAuthLogin = document.getElementById('btn-auth-login');
     const btnAuthEntry = document.getElementById('btn-auth-entry');
+    const authEntryShell = document.querySelector('.auth-entry-shell');
+    const btnAuthSignOut = document.getElementById('btn-auth-signout');
+    const passwordToggleButtons = document.querySelectorAll('.password-toggle-btn');
+    const spaceNameModal = document.getElementById('space-name-modal');
+    const spaceNameForm = document.getElementById('space-name-form');
+    const spaceNameInput = document.getElementById('space-name-input');
+    const btnSpaceNameClose = document.getElementById('btn-space-name-close');
+    const btnSpaceNameCancel = document.getElementById('btn-space-name-cancel');
     
     if (btnToggleLib) {
       btnToggleLib.addEventListener('click', () => {
@@ -2189,16 +2343,58 @@ class App {
     }
 
     if (btnAuthLogin) {
-      btnAuthLogin.addEventListener('click', () => this.handleAuthSubmit('login'));
+      btnAuthLogin.addEventListener('click', () => {
+        this.setAuthMode('login');
+        this.handleAuthSubmit('login');
+      });
     }
 
+    passwordToggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        this.togglePasswordVisibility(button.getAttribute('data-target'), button);
+      });
+    });
+
     if (btnAuthEntry) {
-      btnAuthEntry.addEventListener('click', () => {
+      btnAuthEntry.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (this.currentUser) {
-          this.showToast(lang.t('auth_synced'));
+          this.toggleAuthAccountMenu();
           return;
         }
         this.showAuthModal(lang.t('auth_entry_message'));
+      });
+    }
+
+    if (authEntryShell) {
+      authEntryShell.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    if (btnAuthSignOut) {
+      btnAuthSignOut.addEventListener('click', () => this.signOutCurrentUser());
+    }
+
+    document.addEventListener('click', () => this.closeAuthAccountMenu());
+
+    if (btnSpaceNameClose) {
+      btnSpaceNameClose.addEventListener('click', () => this.hideSpaceNameModal());
+    }
+
+    if (btnSpaceNameCancel) {
+      btnSpaceNameCancel.addEventListener('click', () => this.hideSpaceNameModal());
+    }
+
+    if (spaceNameModal) {
+      spaceNameModal.addEventListener('click', (e) => {
+        if (e.target === spaceNameModal) this.hideSpaceNameModal();
+      });
+    }
+
+    if (spaceNameForm) {
+      spaceNameForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.confirmCreateNewSpace(spaceNameInput?.value || '');
+        this.hideSpaceNameModal();
       });
     }
 
@@ -2912,6 +3108,10 @@ class App {
       if (trackInfoEl) trackInfoEl.classList.add('visible');
       this.updateSaveNudge();
       if (!this.currentUser) {
+        if (!this.saveNudgeHintShown) {
+          this.saveNudgeHintShown = true;
+          this.revealSaveNudgeHint();
+        }
         this.showToast(lang.t('try_add_favorite'));
       }
     }, 600);

@@ -116,10 +116,17 @@
           </svg>
           <span id="lang-toggle-text">中文</span>
         </button>
-        <button id="btn-auth-entry" class="auth-entry-btn" type="button" title="登录保存空间" data-i18n-title="auth_entry">
-          <span class="auth-entry-dot" aria-hidden="true"></span>
-          <span id="auth-entry-text" data-i18n="auth_entry">登录保存空间</span>
-        </button>
+        <div class="auth-entry-shell">
+          <button id="btn-auth-entry" class="auth-entry-btn" type="button" title="登录保存空间" data-i18n-title="auth_entry">
+            <span class="auth-entry-dot" aria-hidden="true"></span>
+            <span id="auth-entry-text" data-i18n="auth_entry">登录保存空间</span>
+          </button>
+          <div id="auth-account-menu" class="auth-account-menu glass hidden">
+            <span class="auth-account-kicker" data-i18n="auth_account">账户状态</span>
+            <span id="auth-account-email" class="auth-account-email">未登录</span>
+            <button id="btn-auth-signout" class="auth-signout-btn" type="button" data-i18n="auth_sign_out">退出登录</button>
+          </div>
+        </div>
         <div class="status-indicator hidden" id="mp-status">
           <span class="dot yellow"></span>
           <span class="status-text" data-i18n="init_gestures">Initializing gestures...</span>
@@ -375,10 +382,37 @@
       <p data-i18n="auth_desc">注册后即可把喜欢的歌曲保存到自己的 Cosmic Vinyl 资料库。</p>
       <form id="auth-form" class="auth-form">
         <input id="auth-email" type="email" autocomplete="email" placeholder="邮箱" data-i18n-placeholder="auth_email_placeholder" required>
-        <input id="auth-password" type="password" autocomplete="current-password" placeholder="密码" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
+        <div class="password-field">
+          <input id="auth-password" type="password" autocomplete="new-password" placeholder="密码" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
+          <button class="password-toggle-btn" type="button" data-target="auth-password" aria-label="显示密码" data-i18n-title="auth_show_password">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+          </button>
+        </div>
+        <div id="auth-confirm-group" class="password-field">
+          <input id="auth-password-confirm" type="password" autocomplete="new-password" placeholder="确认密码" data-i18n-placeholder="auth_confirm_password_placeholder" required minlength="6">
+          <button class="password-toggle-btn" type="button" data-target="auth-password-confirm" aria-label="显示密码" data-i18n-title="auth_show_password">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+          </button>
+        </div>
         <div id="auth-message" class="auth-message"></div>
         <button id="btn-auth-signup" class="auth-primary-btn" type="submit" data-i18n="auth_signup">注册并保存</button>
         <button id="btn-auth-login" class="auth-secondary-btn" type="button" data-i18n="auth_login">我已有账号</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="space-name-modal" class="auth-modal space-name-modal hidden" aria-hidden="true">
+    <div class="auth-card space-name-card glass">
+      <button id="btn-space-name-close" class="auth-close-btn" type="button" aria-label="关闭">×</button>
+      <div class="auth-kicker" data-i18n="new_space_title">新建音乐空间</div>
+      <h2 data-i18n="new_space_prompt">给你自己的音乐空间命名</h2>
+      <p data-i18n="new_space_desc">为你选择的歌曲创建一个只属于自己的空间。</p>
+      <form id="space-name-form" class="auth-form">
+        <input id="space-name-input" type="text" autocomplete="off" placeholder="我的音乐空间" data-i18n-placeholder="new_space_placeholder" maxlength="32" required>
+        <div class="space-name-actions">
+          <button id="btn-space-name-cancel" class="auth-secondary-btn" type="button" data-i18n="cancel">取消</button>
+          <button class="auth-primary-btn" type="submit" data-i18n="create_space_action">创建空间</button>
+        </div>
       </form>
     </div>
   </div>
