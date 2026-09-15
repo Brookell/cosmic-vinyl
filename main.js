@@ -108,6 +108,7 @@ class App {
     this.currentUser = null;
     this.pendingAddSong = null;
     this.pendingCreateSpace = null;
+    this.authMode = 'signup';
     this.cloudSaveTimer = null;
     this.saveNudgeHintTimer = null;
     this.saveNudgeHintShown = false;
@@ -511,16 +512,35 @@ class App {
 
   setAuthMode(mode = 'signup') {
     const confirmGroup = document.getElementById('auth-confirm-group');
+    const spaceNameInput = document.getElementById('auth-space-name');
     const password = document.getElementById('auth-password');
     const confirm = document.getElementById('auth-password-confirm');
+    const primary = document.getElementById('btn-auth-signup');
+    const secondary = document.getElementById('btn-auth-login');
     const isLogin = mode === 'login';
+    this.authMode = isLogin ? 'login' : 'signup';
+    spaceNameInput?.classList.toggle('hidden', isLogin);
     confirmGroup?.classList.toggle('hidden', isLogin);
+    if (spaceNameInput) {
+      spaceNameInput.required = !isLogin;
+      if (!isLogin && !spaceNameInput.value.trim()) {
+        spaceNameInput.value = lang.t('personal_space_name');
+      }
+    }
     if (confirm) {
       confirm.required = !isLogin;
       if (isLogin) confirm.value = '';
     }
     if (password) {
       password.setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
+    }
+    if (primary) {
+      primary.textContent = lang.t(isLogin ? 'auth_login_submit' : 'auth_signup');
+      primary.setAttribute('data-i18n', isLogin ? 'auth_login_submit' : 'auth_signup');
+    }
+    if (secondary) {
+      secondary.textContent = lang.t(isLogin ? 'auth_switch_signup' : 'auth_login');
+      secondary.setAttribute('data-i18n', isLogin ? 'auth_switch_signup' : 'auth_login');
     }
   }
 
@@ -539,10 +559,15 @@ class App {
     const email = document.getElementById('auth-email')?.value.trim();
     const password = document.getElementById('auth-password')?.value;
     const confirmPassword = document.getElementById('auth-password-confirm')?.value;
+    const authSpaceName = document.getElementById('auth-space-name')?.value.trim();
     if (!email || !password) return;
     if (mode !== 'login' && password !== confirmPassword) {
       this.setAuthMessage(lang.t('auth_password_mismatch'));
       return;
+    }
+    if (mode !== 'login' && authSpaceName) {
+      this.pendingCreateSpace = { name: authSpaceName };
+      sessionStorage.setItem(this.pendingCreateSpaceStorageKey, JSON.stringify(this.pendingCreateSpace));
     }
 
     this.setAuthMessage(lang.t('auth_signing_in'));
@@ -634,6 +659,15 @@ class App {
     const pending = this.pendingCreateSpace;
     this.pendingCreateSpace = null;
     sessionStorage.removeItem(this.pendingCreateSpaceStorageKey);
+    const personalSpace = this.spaces.find((space) => space.isPersonalSpace);
+    if (personalSpace) {
+      personalSpace.name = pending.name || personalSpace.name;
+      personalSpace.updatedAt = new Date().toISOString();
+      this.persistSpaces();
+      this.renderSpaceSelector();
+      this.scheduleCloudSave();
+      return;
+    }
     this.confirmCreateNewSpace(pending.name || lang.t('personal_space_name'), { skipAuthGate: true });
   }
 
@@ -2338,14 +2372,14 @@ class App {
     if (authForm) {
       authForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        this.handleAuthSubmit('signup');
+        this.handleAuthSubmit(this.authMode);
       });
     }
 
     if (btnAuthLogin) {
       btnAuthLogin.addEventListener('click', () => {
-        this.setAuthMode('login');
-        this.handleAuthSubmit('login');
+        this.setAuthMode(this.authMode === 'login' ? 'signup' : 'login');
+        this.setAuthMessage('');
       });
     }
 
