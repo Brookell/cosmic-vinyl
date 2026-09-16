@@ -109,6 +109,7 @@ class App {
     this.pendingAddSong = null;
     this.pendingCreateSpace = null;
     this.authMode = 'signup';
+    this.authContext = null;
     this.cloudSaveTimer = null;
     this.saveNudgeHintTimer = null;
     this.saveNudgeHintShown = false;
@@ -279,7 +280,7 @@ class App {
   dedupeStarterSpaces(spaces) {
     let hasStarterSpace = false;
     return spaces.filter((space) => {
-      const isDefaultNamed = space.name === lang.t('default_space_name') || space.name === 'Public Cosmic Space' || space.name === '公共宇宙空间' || space.name === 'My Cosmic Space' || space.name === '我的宇宙空间';
+      const isDefaultNamed = this.isStarterSpaceName(space.name);
       if (space.isStarterSpace || isDefaultNamed) {
         if (hasStarterSpace) return false;
         hasStarterSpace = true;
@@ -300,6 +301,18 @@ class App {
 
   getActiveSpace() {
     return this.spaces.find((space) => space.id === this.activeSpaceId) || this.spaces[0] || null;
+  }
+
+  isStarterSpaceName(name) {
+    return [
+      lang.t('default_space_name'),
+      'Public Music Universe',
+      '公共音乐宇宙',
+      'Public Cosmic Space',
+      '公共宇宙空间',
+      'My Cosmic Space',
+      '我的宇宙空间'
+    ].includes(name);
   }
 
   getDefaultEntryTrackIndex() {
@@ -475,20 +488,28 @@ class App {
     } else {
       sessionStorage.removeItem(this.pendingAddSongStorageKey);
     }
-    this.showAuthModal(lang.t('auth_required_message'));
+    this.showAuthModal(lang.t('auth_required_message'), {
+      title: lang.t('auth_save_song_context_title'),
+      body: `${pendingSong.name || ''}${pendingSong.artist ? ` · ${pendingSong.artist}` : ''} — ${lang.t('auth_save_song_context_body')}`
+    });
   }
 
   requireAuthForSpaceCreation(spaceName) {
     const pending = { name: spaceName || lang.t('personal_space_name') };
     this.pendingCreateSpace = pending;
     sessionStorage.setItem(this.pendingCreateSpaceStorageKey, JSON.stringify(pending));
-    this.showAuthModal(lang.t('auth_entry_message'));
+    this.showAuthModal(lang.t('auth_entry_message'), {
+      title: lang.t('auth_create_space_context_title'),
+      body: `${pending.name} — ${lang.t('auth_create_space_context_body')}`
+    });
   }
 
-  showAuthModal(message = '') {
+  showAuthModal(message = '', context = null) {
     const modal = document.getElementById('auth-modal');
     const messageEl = document.getElementById('auth-message');
+    this.authContext = context;
     this.setAuthMode('signup');
+    this.updateAuthContextUI();
     if (messageEl) messageEl.textContent = message;
     if (modal) {
       modal.classList.remove('hidden');
@@ -511,6 +532,8 @@ class App {
   }
 
   setAuthMode(mode = 'signup') {
+    const title = document.getElementById('auth-title');
+    const desc = document.getElementById('auth-desc');
     const confirmGroup = document.getElementById('auth-confirm-group');
     const spaceNameInput = document.getElementById('auth-space-name');
     const password = document.getElementById('auth-password');
@@ -519,6 +542,14 @@ class App {
     const secondary = document.getElementById('btn-auth-login');
     const isLogin = mode === 'login';
     this.authMode = isLogin ? 'login' : 'signup';
+    if (title) {
+      title.textContent = lang.t(isLogin ? 'auth_login_title' : 'auth_title');
+      title.setAttribute('data-i18n', isLogin ? 'auth_login_title' : 'auth_title');
+    }
+    if (desc) {
+      desc.textContent = lang.t(isLogin ? 'auth_login_desc' : 'auth_desc');
+      desc.setAttribute('data-i18n', isLogin ? 'auth_login_desc' : 'auth_desc');
+    }
     spaceNameInput?.classList.toggle('hidden', isLogin);
     confirmGroup?.classList.toggle('hidden', isLogin);
     if (spaceNameInput) {
@@ -542,6 +573,16 @@ class App {
       secondary.textContent = lang.t(isLogin ? 'auth_switch_signup' : 'auth_login');
       secondary.setAttribute('data-i18n', isLogin ? 'auth_switch_signup' : 'auth_login');
     }
+  }
+
+  updateAuthContextUI() {
+    const context = document.getElementById('auth-context');
+    const title = document.getElementById('auth-context-title');
+    const body = document.getElementById('auth-context-body');
+    const hasContext = Boolean(this.authContext?.title || this.authContext?.body);
+    context?.classList.toggle('hidden', !hasContext);
+    if (title) title.textContent = this.authContext?.title || '';
+    if (body) body.textContent = this.authContext?.body || '';
   }
 
   togglePasswordVisibility(targetId, button) {
@@ -572,6 +613,12 @@ class App {
 
     this.setAuthMessage(lang.t('auth_signing_in'));
     try {
+      const hadPendingAction = Boolean(
+        this.pendingAddSong ||
+        this.pendingCreateSpace ||
+        sessionStorage.getItem(this.pendingAddSongStorageKey) ||
+        sessionStorage.getItem(this.pendingCreateSpaceStorageKey)
+      );
       const authCall = mode === 'login'
         ? supabase.auth.signInWithPassword({ email, password })
         : supabase.auth.signUp({
@@ -589,6 +636,9 @@ class App {
         await this.loadCloudSpaces();
         await this.consumePendingAddSong();
         await this.consumePendingCreateSpace();
+        if (!hadPendingAction) {
+          this.showToast(lang.t('auth_signed_in'));
+        }
         return;
       }
 
@@ -697,14 +747,13 @@ class App {
       return;
     }
 
-    const defaultNames = new Set([lang.t('default_space_name'), 'Public Cosmic Space', '公共宇宙空间', 'My Cosmic Space', '我的宇宙空间']);
     const cloudSpaces = data
-      .filter((space) => !defaultNames.has(space.name))
+      .filter((space) => !this.isStarterSpaceName(space.name))
       .map((space, index) => this.normalizeSpace({
         id: `cloud_${space.id}`,
         cloudId: space.id,
         name: space.name,
-        isPersonalSpace: space.name === lang.t('personal_space_name'),
+        isPersonalSpace: true,
         settings: space.settings || {},
         createdAt: space.created_at,
         updatedAt: space.updated_at,
@@ -894,17 +943,18 @@ class App {
     }
 
     const now = new Date().toISOString();
-    const seedTracks = this.cloneTracks(audio.tracks.slice(0, 1));
     this.spaces.push({
       id: this.generateSpaceId(),
+      isPersonalSpace: true,
       name: trimmedName,
-      tracks: seedTracks.length > 0 ? seedTracks : this.cloneTracks(audio.tracks),
+      tracks: [],
       settings: this.getCurrentSpaceSettings(),
       createdAt: now,
       updatedAt: now
     });
 
     this.switchSpace(this.spaces[this.spaces.length - 1].id, { saveCurrent: false });
+    this.hideSpaceNameModal();
     this.showToast(lang.t('space_created'));
     return this.spaces[this.spaces.length - 1];
   }
@@ -1016,7 +1066,9 @@ class App {
     audio.tracks = this.cloneTracks(nextSpace.tracks);
     NUM_ALBUMS = audio.tracks.length;
     this.albumCanvasTextures = [];
-    const entryIndex = nextSpace.isStarterSpace ? this.getDefaultEntryTrackIndex() : 0;
+    const entryIndex = audio.tracks.length > 0
+      ? (nextSpace.isStarterSpace ? this.getDefaultEntryTrackIndex() : 0)
+      : -1;
     this.currentRotation = entryIndex;
     this.targetRotation = entryIndex;
     this.focusedIndex = entryIndex;
@@ -1025,10 +1077,15 @@ class App {
 
     if (this.scene) {
       this.rebuildCarousel();
-      this.focusAlbumIndex(entryIndex, true);
+      if (entryIndex >= 0) {
+        this.focusAlbumIndex(entryIndex, true);
+      }
     }
 
     this.updatePlayingTrackUI(entryIndex);
+    this.updateHUDTrackDetails(entryIndex);
+    this.updateLibraryListUI();
+    this.updateSaveNudge();
     this.applyCurrentSpaceSettingsToControls();
     this.persistSpaces();
     this.renderSpaceSelector();
@@ -2795,15 +2852,27 @@ class App {
 
   // Update dynamic album artist details on the Spotify detail banner (focused album)
   updateHUDTrackDetails(index) {
-    if (index < 0 || index >= NUM_ALBUMS) return;
-    
-    const track = audio.tracks[index];
-
-    // Update Spotify detail banner text and images!
     const bannerArt = document.getElementById('banner-art-preview');
     const bannerTitle = document.getElementById('banner-title-text');
     const bannerArtist = document.getElementById('banner-artist-text');
     const bannerDuration = document.getElementById('banner-duration-text');
+    const focusedTitle = document.getElementById('focused-track-title');
+    const focusedArtist = document.getElementById('focused-track-artist');
+
+    if (index < 0 || index >= NUM_ALBUMS) {
+      if (bannerArt) bannerArt.style.backgroundImage = '';
+      if (bannerTitle) bannerTitle.textContent = lang.t('empty_space_title');
+      if (bannerArtist) bannerArtist.textContent = lang.t('empty_space_desc');
+      if (bannerDuration) bannerDuration.textContent = '';
+      if (focusedTitle) focusedTitle.textContent = lang.t('empty_space_title');
+      if (focusedArtist) focusedArtist.textContent = lang.t('empty_space_desc');
+      this.updateLibraryHighlight(-1);
+      return;
+    }
+    
+    const track = audio.tracks[index];
+
+    // Update Spotify detail banner text and images!
     
     if (bannerArt && this.albumCanvasTextures[index]) {
       bannerArt.style.backgroundImage = `url(${this.albumCanvasTextures[index].dataUrl})`;
@@ -2813,8 +2882,6 @@ class App {
     if (bannerDuration) bannerDuration.textContent = track.duration;
     
     // Update focused track details below the 3D album card
-    const focusedTitle = document.getElementById('focused-track-title');
-    const focusedArtist = document.getElementById('focused-track-artist');
     if (focusedTitle) focusedTitle.textContent = track.name;
     if (focusedArtist) focusedArtist.textContent = track.artist;
     
@@ -3521,6 +3588,15 @@ class App {
       });
     }
     
+    if (NUM_ALBUMS === 0) {
+      this.currentRotation = -1;
+      this.targetRotation = -1;
+      this.focusedIndex = -1;
+      this.updateHUDTrackDetails(-1);
+      this.updateLibraryListUI();
+      return;
+    }
+
     // 3. Re-clamp scroll targets (wrapped using modulo for infinite scroll)
     this.targetRotation = ((this.targetRotation % NUM_ALBUMS) + NUM_ALBUMS) % NUM_ALBUMS;
     this.currentRotation = ((this.currentRotation % NUM_ALBUMS) + NUM_ALBUMS) % NUM_ALBUMS;
@@ -3549,6 +3625,23 @@ class App {
     listContainer.innerHTML = '';
     const activeSpace = this.getActiveSpace();
     const showSaveToPersonal = !activeSpace?.isPersonalSpace;
+
+    if (audio.tracks.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'library-empty-space';
+      emptyState.innerHTML = `
+        <span class="library-empty-orbit" aria-hidden="true"></span>
+        <h3>${lang.t('empty_space_title')}</h3>
+        <p>${lang.t('empty_space_desc')}</p>
+        <button type="button" class="library-empty-action">${lang.t('explore_public_space')}</button>
+      `;
+      emptyState.querySelector('.library-empty-action')?.addEventListener('click', () => {
+        const starterSpace = this.getStarterSpace();
+        if (starterSpace) this.switchSpace(starterSpace.id);
+      });
+      listContainer.appendChild(emptyState);
+      return;
+    }
     
     audio.tracks.forEach((track, index) => {
       // Filter matching
@@ -3579,7 +3672,7 @@ class App {
         <div class="library-song-actions">
           ${showSaveToPersonal ? `
           <button class="library-song-save-btn" title="${lang.t('save_to_my_space')}">
-            <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           </button>` : ''}
           <button class="library-song-play-btn" title="Play Song">
             <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>

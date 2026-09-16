@@ -2433,6 +2433,42 @@ html[data-lang="en"] .onboarding-desc {
   line-height: 1.55;
 }
 
+.auth-context {
+  display: grid;
+  gap: 5px;
+  margin: -8px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(56, 189, 248, 0.12), transparent 32%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.auth-context.hidden {
+  display: none;
+}
+
+.auth-context-title,
+.auth-context-body {
+  display: block;
+}
+
+.auth-context-title {
+  color: var(--accent-cyan);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-context-body {
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.42;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -2659,6 +2695,68 @@ html[data-lang="en"] .onboarding-desc {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.library-empty-space {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 18px 16px;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.11), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 38px rgba(0, 0, 0, 0.2);
+}
+
+.library-empty-orbit {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.75);
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.14);
+}
+
+.library-empty-space h3 {
+  margin: 2px 0 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.library-empty-space p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.library-empty-action {
+  margin-top: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent-cyan);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.library-empty-action:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.42);
+  transform: translateY(-1px);
 }
 
 .library-song-item {

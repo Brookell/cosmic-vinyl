@@ -378,8 +378,12 @@
     <div class="auth-card glass">
       <button id="btn-auth-close" class="auth-close-btn" type="button" aria-label="关闭">×</button>
       <div class="auth-kicker" data-i18n="auth_kicker">保存你的空间</div>
-      <h2 data-i18n="auth_title">创建你的音乐空间</h2>
-      <p data-i18n="auth_desc">注册后即可把喜欢的歌曲保存到自己的 Cosmic Vinyl 资料库。</p>
+      <h2 id="auth-title" data-i18n="auth_title">创建你的音乐空间</h2>
+      <p id="auth-desc" data-i18n="auth_desc">注册后即可把喜欢的歌曲保存到自己的 Cosmic Vinyl 资料库。</p>
+      <div id="auth-context" class="auth-context hidden">
+        <span id="auth-context-title" class="auth-context-title"></span>
+        <span id="auth-context-body" class="auth-context-body"></span>
+      </div>
       <form id="auth-form" class="auth-form">
         <input id="auth-email" type="email" autocomplete="email" placeholder="邮箱" data-i18n-placeholder="auth_email_placeholder" required>
         <input id="auth-space-name" type="text" autocomplete="off" placeholder="你的音乐空间名称" data-i18n-placeholder="auth_space_name_placeholder" maxlength="32">
