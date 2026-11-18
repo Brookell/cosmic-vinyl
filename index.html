@@ -385,16 +385,16 @@
         <span id="auth-context-body" class="auth-context-body"></span>
       </div>
       <form id="auth-form" class="auth-form">
-        <input id="auth-email" type="email" autocomplete="email" placeholder="邮箱" data-i18n-placeholder="auth_email_placeholder" required>
+        <input id="auth-username" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="用户名" data-i18n-placeholder="auth_username_placeholder" maxlength="20" required>
         <input id="auth-space-name" type="text" autocomplete="off" placeholder="你的音乐空间名称" data-i18n-placeholder="auth_space_name_placeholder" maxlength="32">
         <div class="password-field">
-          <input id="auth-password" type="password" autocomplete="new-password" placeholder="密码" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
+          <input id="auth-password" type="password" autocomplete="new-password" inputmode="numeric" placeholder="6 位数字密码" data-i18n-placeholder="auth_password_placeholder" required minlength="6">
           <button class="password-toggle-btn" type="button" data-target="auth-password" aria-label="显示密码" data-i18n-title="auth_show_password">
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
           </button>
         </div>
         <div id="auth-confirm-group" class="password-field">
-          <input id="auth-password-confirm" type="password" autocomplete="new-password" placeholder="确认密码" data-i18n-placeholder="auth_confirm_password_placeholder" required minlength="6">
+          <input id="auth-password-confirm" type="password" autocomplete="new-password" inputmode="numeric" placeholder="再次输入 6 位数字密码" data-i18n-placeholder="auth_confirm_password_placeholder" required minlength="6">
           <button class="password-toggle-btn" type="button" data-target="auth-password-confirm" aria-label="显示密码" data-i18n-title="auth_show_password">
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
           </button>

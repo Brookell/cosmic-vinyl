@@ -12,6 +12,41 @@ const ALBUM_WIDTH = 2.2;
 const ALBUM_HEIGHT = 2.2;
 const VINYL_ROTATION_SPEED = 2.5;
 
+// --- USERNAME AUTH ---
+// Supabase Auth needs an email for password sign-in, so each username maps to an
+// internal address on this domain. No mail is ever sent to it, which means
+// "Confirm email" must be turned off in Supabase (Authentication → Sign In / Providers → Email).
+const USERNAME_EMAIL_DOMAIN = 'users.cosmic-vinyl.local';
+const USERNAME_PATTERN = /^[\p{L}\p{N}_]{2,20}$/u;
+const USERNAME_MAX_BYTES = 30; // keeps the encoded email local part under 64 chars
+const SIX_DIGIT_PASSWORD = /^\d{6}$/;
+
+function normalizeUsername(raw) {
+  return (raw || '').normalize('NFKC').trim().toLowerCase();
+}
+
+function isValidUsername(username) {
+  return USERNAME_PATTERN.test(username)
+    && new TextEncoder().encode(username).length <= USERNAME_MAX_BYTES;
+}
+
+// ASCII names map to themselves; anything else is hex-encoded with an "x-" prefix.
+// ASCII names cannot contain "-", so the two forms never collide.
+function usernameToEmail(username) {
+  const localPart = /^[a-z0-9_]+$/.test(username)
+    ? username
+    : `x-${Array.from(new TextEncoder().encode(username), (b) => b.toString(16).padStart(2, '0')).join('')}`;
+  return `${localPart}@${USERNAME_EMAIL_DOMAIN}`;
+}
+
+function getUserDisplayName(user) {
+  if (!user) return '';
+  const name = user.user_metadata?.username;
+  if (name) return name;
+  if (user.email && !user.email.endsWith(`@${USERNAME_EMAIL_DOMAIN}`)) return user.email;
+  return '';
+}
+
 class App {
   constructor() {
     this.container = document.body;
@@ -451,7 +486,7 @@ class App {
     text.textContent = isSignedIn ? lang.t('auth_signed_in') : lang.t('auth_entry');
 
     if (email) {
-      email.textContent = this.currentUser?.email || lang.t('auth_entry');
+      email.textContent = getUserDisplayName(this.currentUser) || lang.t('auth_entry');
     }
     if (!isSignedIn) {
       menu?.classList.add('hidden');
@@ -514,7 +549,7 @@ class App {
     if (modal) {
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
-      document.getElementById('auth-email')?.focus();
+      document.getElementById('auth-username')?.focus();
     }
   }
 
@@ -597,11 +632,25 @@ class App {
 
   async handleAuthSubmit(mode = 'signup') {
     this.setAuthMode(mode);
-    const email = document.getElementById('auth-email')?.value.trim();
-    const password = document.getElementById('auth-password')?.value;
+    const rawUsername = document.getElementById('auth-username')?.value.trim() || '';
+    const password = document.getElementById('auth-password')?.value || '';
     const confirmPassword = document.getElementById('auth-password-confirm')?.value;
     const authSpaceName = document.getElementById('auth-space-name')?.value.trim();
-    if (!email || !password) return;
+    if (!rawUsername || !password) return;
+
+    // Accounts created before username sign-in can still log in with their email.
+    const isLegacyEmailLogin = mode === 'login' && rawUsername.includes('@');
+    const username = normalizeUsername(rawUsername);
+    if (!isLegacyEmailLogin && !isValidUsername(username)) {
+      this.setAuthMessage(lang.t('auth_username_invalid'));
+      return;
+    }
+    const email = isLegacyEmailLogin ? rawUsername : usernameToEmail(username);
+
+    if (!isLegacyEmailLogin && !SIX_DIGIT_PASSWORD.test(password)) {
+      this.setAuthMessage(lang.t('auth_password_invalid'));
+      return;
+    }
     if (mode !== 'login' && password !== confirmPassword) {
       this.setAuthMessage(lang.t('auth_password_mismatch'));
       return;
@@ -619,16 +668,25 @@ class App {
         sessionStorage.getItem(this.pendingAddSongStorageKey) ||
         sessionStorage.getItem(this.pendingCreateSpaceStorageKey)
       );
-      const authCall = mode === 'login'
-        ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({
+      let result = mode === 'login'
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: window.location.href }
+            options: { data: { username: rawUsername.normalize('NFKC') } }
           });
+      if (result.error) throw result.error;
 
-      const { data, error } = await authCall;
-      if (error) throw error;
+      // An existing username can come back from signUp as a user with no identities.
+      if (mode !== 'login' && result.data.user && result.data.user.identities?.length === 0) {
+        this.setAuthMessage(lang.t('auth_username_taken'));
+        return;
+      }
+      if (mode !== 'login' && !result.data.session) {
+        result = await supabase.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+      }
+      const { data } = result;
 
       if (data.session?.user) {
         this.currentUser = data.session.user;
@@ -645,7 +703,9 @@ class App {
       this.setAuthMessage(lang.t('auth_check_email'));
     } catch (e) {
       console.warn('Authentication failed:', e);
-      this.setAuthMessage(lang.t('auth_failed'));
+      const alreadyTaken = mode !== 'login'
+        && (e?.code === 'user_already_exists' || /already registered/i.test(e?.message || ''));
+      this.setAuthMessage(lang.t(alreadyTaken ? 'auth_username_taken' : 'auth_failed'));
     }
   }
 
