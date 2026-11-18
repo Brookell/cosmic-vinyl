@@ -5,12 +5,48 @@ import { audio } from './audio.js';
 import { gestures } from './gestures.js';
 import { lang } from './lang.js';
 import { supabase } from './supabaseClient.js';
+import { createCodeSlots } from './codeSlots.js';
 
 // --- CONFIGURATION CONSTANTS ---
 let NUM_ALBUMS = audio.tracks.length;
 const ALBUM_WIDTH = 2.2;
 const ALBUM_HEIGHT = 2.2;
 const VINYL_ROTATION_SPEED = 2.5;
+
+// --- USERNAME AUTH ---
+// Supabase Auth needs an email for password sign-in, so each username maps to an
+// internal address on this domain. No mail is ever sent to it, which means
+// "Confirm email" must be turned off in Supabase (Authentication → Sign In / Providers → Email).
+const USERNAME_EMAIL_DOMAIN = 'users.cosmic-vinyl.local';
+const USERNAME_PATTERN = /^[\p{L}\p{N}_]{2,20}$/u;
+const USERNAME_MAX_BYTES = 30; // keeps the encoded email local part under 64 chars
+const PIN_LENGTH = 6;
+
+function normalizeUsername(raw) {
+  return (raw || '').normalize('NFKC').trim().toLowerCase();
+}
+
+function isValidUsername(username) {
+  return USERNAME_PATTERN.test(username)
+    && new TextEncoder().encode(username).length <= USERNAME_MAX_BYTES;
+}
+
+// ASCII names map to themselves; anything else is hex-encoded with an "x-" prefix.
+// ASCII names cannot contain "-", so the two forms never collide.
+function usernameToEmail(username) {
+  const localPart = /^[a-z0-9_]+$/.test(username)
+    ? username
+    : `x-${Array.from(new TextEncoder().encode(username), (b) => b.toString(16).padStart(2, '0')).join('')}`;
+  return `${localPart}@${USERNAME_EMAIL_DOMAIN}`;
+}
+
+function getUserDisplayName(user) {
+  if (!user) return '';
+  const name = user.user_metadata?.username;
+  if (name) return name;
+  if (user.email && !user.email.endsWith(`@${USERNAME_EMAIL_DOMAIN}`)) return user.email;
+  return '';
+}
 
 class App {
   constructor() {
@@ -451,7 +487,7 @@ class App {
     text.textContent = isSignedIn ? lang.t('auth_signed_in') : lang.t('auth_entry');
 
     if (email) {
-      email.textContent = this.currentUser?.email || lang.t('auth_entry');
+      email.textContent = getUserDisplayName(this.currentUser) || lang.t('auth_entry');
     }
     if (!isSignedIn) {
       menu?.classList.add('hidden');
@@ -509,12 +545,13 @@ class App {
     const messageEl = document.getElementById('auth-message');
     this.authContext = context;
     this.setAuthMode('signup');
+    this.setUsernameInvalid(false);
     this.updateAuthContextUI();
     if (messageEl) messageEl.textContent = message;
     if (modal) {
       modal.classList.remove('hidden');
       modal.setAttribute('aria-hidden', 'false');
-      document.getElementById('auth-email')?.focus();
+      document.getElementById('auth-username')?.focus();
     }
   }
 
@@ -534,10 +571,7 @@ class App {
   setAuthMode(mode = 'signup') {
     const title = document.getElementById('auth-title');
     const desc = document.getElementById('auth-desc');
-    const confirmGroup = document.getElementById('auth-confirm-group');
     const spaceNameInput = document.getElementById('auth-space-name');
-    const password = document.getElementById('auth-password');
-    const confirm = document.getElementById('auth-password-confirm');
     const primary = document.getElementById('btn-auth-signup');
     const secondary = document.getElementById('btn-auth-login');
     const isLogin = mode === 'login';
@@ -551,20 +585,13 @@ class App {
       desc.setAttribute('data-i18n', isLogin ? 'auth_login_desc' : 'auth_desc');
     }
     spaceNameInput?.classList.toggle('hidden', isLogin);
-    confirmGroup?.classList.toggle('hidden', isLogin);
     if (spaceNameInput) {
       spaceNameInput.required = !isLogin;
       if (!isLogin && !spaceNameInput.value.trim()) {
         spaceNameInput.value = lang.t('personal_space_name');
       }
     }
-    if (confirm) {
-      confirm.required = !isLogin;
-      if (isLogin) confirm.value = '';
-    }
-    if (password) {
-      password.setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
-    }
+    this.resetAuthPin();
     if (primary) {
       primary.textContent = lang.t(isLogin ? 'auth_login_submit' : 'auth_signup');
       primary.setAttribute('data-i18n', isLogin ? 'auth_login_submit' : 'auth_signup');
@@ -585,32 +612,157 @@ class App {
     if (body) body.textContent = this.authContext?.body || '';
   }
 
-  togglePasswordVisibility(targetId, button) {
-    const input = document.getElementById(targetId);
-    if (!input) return;
-    const shouldShow = input.type === 'password';
-    input.type = shouldShow ? 'text' : 'password';
-    const label = lang.t(shouldShow ? 'auth_hide_password' : 'auth_show_password');
-    button?.setAttribute('aria-label', label);
-    button?.setAttribute('title', label);
+  setupAuthPin() {
+    const root = document.getElementById('auth-pin-slots');
+    if (!root) return;
+    this.authPin = { step: 'set', first: '', confirmed: '' };
+    this.authPinSlots = createCodeSlots(root, {
+      length: PIN_LENGTH,
+      label: lang.t('auth_pin_set'),
+      autocomplete: 'off',
+      onChange: () => this.handleAuthPinChange(),
+      onComplete: (code) => this.handleAuthPinComplete(code),
+      accentColor: '#f5f5f5',
+      inkColor: '#f5f5f5',
+      slotColor: '#27272a',
+      digitColor: '#18181b',
+      dangerColor: '#ff3b30',
+      slotSize: 44,
+      gap: 8,
+      radius: 12,
+      bounce: 0.2,
+      settle: 0.3,
+      rise: 8,
+      cascade: 20
+    });
+  }
+
+  // Steps: login → one entry. Signup → 'set', then 'confirm', then 'done'.
+  updateAuthPinUI() {
+    const label = document.getElementById('auth-pin-label');
+    const stepEl = document.getElementById('auth-pin-step');
+    const isLogin = this.authMode === 'login';
+    const step = this.authPin?.step || 'set';
+    const key = isLogin
+      ? 'auth_pin_login'
+      : { set: 'auth_pin_set', confirm: 'auth_pin_confirm', done: 'auth_pin_done' }[step];
+    if (label) {
+      label.textContent = lang.t(key);
+      label.setAttribute('data-i18n', key);
+    }
+    if (stepEl) {
+      stepEl.textContent = isLogin || step === 'done' ? '' : step === 'set' ? '1 / 2' : '2 / 2';
+    }
+    this.authPinSlots?.input.setAttribute('aria-label', lang.t(key));
+  }
+
+  resetAuthPin() {
+    if (!this.authPin) return;
+    clearTimeout(this.authPinTimer);
+    this.authPin = { step: 'set', first: '', confirmed: '' };
+    this.authPinSlots?.clear();
+    this.authPinSlots?.setStatus('idle');
+    this.updateAuthPinUI();
+  }
+
+  handleAuthPinChange() {
+    clearTimeout(this.authPinTimer);
+    this.authPinSlots.setStatus('idle');
+    // Editing a confirmed password starts it over.
+    if (this.authPin.step === 'done') {
+      this.authPin = { step: 'set', first: '', confirmed: '' };
+      this.updateAuthPinUI();
+    }
+  }
+
+  handleAuthPinComplete(code) {
+    if (this.authMode === 'login') {
+      this.handleAuthSubmit('login');
+      return;
+    }
+
+    const slots = this.authPinSlots;
+    if (this.authPin.step === 'set') {
+      this.authPin.first = code;
+      slots.setStatus('success');
+      this.authPinTimer = setTimeout(() => {
+        this.authPin.step = 'confirm';
+        slots.clear();
+        slots.setStatus('idle');
+        this.updateAuthPinUI();
+        slots.focus();
+      }, slots.waveDuration());
+      return;
+    }
+
+    if (this.authPin.step === 'confirm') {
+      if (code === this.authPin.first) {
+        this.authPin = { step: 'done', first: '', confirmed: code };
+        slots.setStatus('success');
+        this.updateAuthPinUI();
+        this.setAuthMessage('');
+        this.handleAuthSubmit('signup');
+        return;
+      }
+      slots.setStatus('error');
+      this.setAuthMessage(lang.t('auth_password_mismatch'));
+      this.authPinTimer = setTimeout(() => {
+        this.authPin = { step: 'set', first: '', confirmed: '' };
+        slots.clear();
+        slots.setStatus('idle');
+        this.updateAuthPinUI();
+        slots.focus();
+      }, slots.waveDuration() + 300);
+    }
+  }
+
+  setUsernameInvalid(invalid) {
+    const input = document.getElementById('auth-username');
+    input?.classList.toggle('is-invalid', invalid);
+    input?.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+  }
+
+  focusUsernameForChange() {
+    const input = document.getElementById('auth-username');
+    this.setUsernameInvalid(true);
+    input?.focus();
+    input?.select();
   }
 
   async handleAuthSubmit(mode = 'signup') {
-    this.setAuthMode(mode);
-    const email = document.getElementById('auth-email')?.value.trim();
-    const password = document.getElementById('auth-password')?.value;
-    const confirmPassword = document.getElementById('auth-password-confirm')?.value;
+    if (this.authSubmitting) return;
+    const isLogin = mode === 'login';
+    const rawUsername = document.getElementById('auth-username')?.value.trim() || '';
     const authSpaceName = document.getElementById('auth-space-name')?.value.trim();
-    if (!email || !password) return;
-    if (mode !== 'login' && password !== confirmPassword) {
-      this.setAuthMessage(lang.t('auth_password_mismatch'));
+    const slots = this.authPinSlots;
+
+    const username = normalizeUsername(rawUsername);
+    if (!isValidUsername(username)) {
+      this.setAuthMessage(lang.t('auth_username_invalid'));
+      this.focusUsernameForChange();
       return;
     }
-    if (mode !== 'login' && authSpaceName) {
+
+    const password = isLogin ? slots?.getValue() : this.authPin?.confirmed;
+    if (!password || password.length !== PIN_LENGTH) {
+      if (!isLogin && this.authPin?.step !== 'set') {
+        // Still mid-way through setting the password: just send them back to the slots.
+        slots?.focus();
+        return;
+      }
+      this.setAuthMessage(isLogin ? '' : lang.t('auth_pin_required'));
+      slots?.focus();
+      return;
+    }
+
+    const email = usernameToEmail(username);
+    if (!isLogin && authSpaceName) {
       this.pendingCreateSpace = { name: authSpaceName };
       sessionStorage.setItem(this.pendingCreateSpaceStorageKey, JSON.stringify(this.pendingCreateSpace));
     }
 
+    this.authSubmitting = true;
+    slots?.setDisabled(true);
     this.setAuthMessage(lang.t('auth_signing_in'));
     try {
       const hadPendingAction = Boolean(
@@ -619,20 +771,30 @@ class App {
         sessionStorage.getItem(this.pendingAddSongStorageKey) ||
         sessionStorage.getItem(this.pendingCreateSpaceStorageKey)
       );
-      const authCall = mode === 'login'
-        ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({
+      let result = isLogin
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: window.location.href }
+            options: { data: { username: rawUsername.normalize('NFKC') } }
           });
+      if (result.error) throw result.error;
 
-      const { data, error } = await authCall;
-      if (error) throw error;
+      // With email confirmation on, an existing user comes back with no identities.
+      if (!isLogin && result.data.user && result.data.user.identities?.length === 0) {
+        throw Object.assign(new Error('User already registered'), { code: 'user_already_exists' });
+      }
+      if (!isLogin && !result.data.session) {
+        result = await supabase.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+      }
+      const { data } = result;
 
       if (data.session?.user) {
         this.currentUser = data.session.user;
+        this.updateAuthEntryUI();
         this.hideAuthModal();
+        this.resetAuthPin();
         await this.loadCloudSpaces();
         await this.consumePendingAddSong();
         await this.consumePendingCreateSpace();
@@ -645,7 +807,27 @@ class App {
       this.setAuthMessage(lang.t('auth_check_email'));
     } catch (e) {
       console.warn('Authentication failed:', e);
-      this.setAuthMessage(lang.t('auth_failed'));
+      const usernameTaken = !isLogin
+        && (e?.code === 'user_already_exists' || /already registered/i.test(e?.message || ''));
+      if (usernameTaken) {
+        // Keep the confirmed password; only the username needs to change.
+        this.setAuthMessage(`${lang.t('auth_username_taken')} ${lang.t('auth_username_change')}`);
+        this.focusUsernameForChange();
+      } else {
+        this.setAuthMessage(lang.t('auth_failed'));
+        if (isLogin) {
+          slots?.setStatus('error');
+          clearTimeout(this.authPinTimer);
+          this.authPinTimer = setTimeout(() => {
+            slots?.clear();
+            slots?.setStatus('idle');
+            slots?.focus();
+          }, (slots?.waveDuration() || 500) + 300);
+        }
+      }
+    } finally {
+      this.authSubmitting = false;
+      slots?.setDisabled(false);
     }
   }
 
@@ -2342,7 +2524,8 @@ class App {
     const btnAuthEntry = document.getElementById('btn-auth-entry');
     const authEntryShell = document.querySelector('.auth-entry-shell');
     const btnAuthSignOut = document.getElementById('btn-auth-signout');
-    const passwordToggleButtons = document.querySelectorAll('.password-toggle-btn');
+    const btnAuthPinToggle = document.getElementById('btn-auth-pin-toggle');
+    const authUsernameInput = document.getElementById('auth-username');
     const spaceNameModal = document.getElementById('space-name-modal');
     const spaceNameForm = document.getElementById('space-name-form');
     const spaceNameInput = document.getElementById('space-name-input');
@@ -2440,11 +2623,26 @@ class App {
       });
     }
 
-    passwordToggleButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        this.togglePasswordVisibility(button.getAttribute('data-target'), button);
+    this.setupAuthPin();
+
+    if (btnAuthPinToggle) {
+      btnAuthPinToggle.addEventListener('click', () => {
+        if (!this.authPinSlots) return;
+        const show = this.authPinSlots.isMasked();
+        this.authPinSlots.setMasked(!show);
+        const label = lang.t(show ? 'auth_hide_password' : 'auth_show_password');
+        btnAuthPinToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btnAuthPinToggle.setAttribute('aria-label', label);
+        btnAuthPinToggle.setAttribute('title', label);
       });
-    });
+    }
+
+    if (authUsernameInput) {
+      authUsernameInput.addEventListener('input', () => {
+        this.setUsernameInvalid(false);
+        this.setAuthMessage('');
+      });
+    }
 
     if (btnAuthEntry) {
       btnAuthEntry.addEventListener('click', (e) => {

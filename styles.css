@@ -2486,38 +2486,6 @@ html[data-lang="en"] .onboarding-desc {
   font-size: 13px;
 }
 
-.auth-form .password-field {
-  position: relative;
-}
-
-.auth-form .password-field input {
-  width: 100%;
-  padding-right: 46px;
-}
-
-.password-toggle-btn {
-  position: absolute;
-  top: 50%;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: color 0.18s ease, background 0.18s ease;
-  transform: translateY(-50%);
-}
-
-.password-toggle-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
-}
-
 .auth-form input:focus {
   border-color: rgba(56, 189, 248, 0.55);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.12);
@@ -2549,6 +2517,209 @@ html[data-lang="en"] .onboarding-desc {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: transparent;
   color: var(--text-primary);
+}
+
+/* Auth: username field error + PIN block */
+.auth-form input.is-invalid {
+  border-color: rgba(255, 59, 48, 0.7);
+  box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.14);
+}
+
+.auth-pin-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.auth-pin-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.auth-pin-label {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-pin-step {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-pin-step:empty {
+  display: none;
+}
+
+.pin-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.pin-toggle-btn:hover,
+.pin-toggle-btn[aria-pressed="true"] {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* CodeSlots */
+.code-slots {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.code-slots-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: var(--cs-gap);
+}
+
+.auth-form .code-slots-input,
+.code-slots-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px; /* stops iOS zooming on focus */
+  opacity: 0;
+  cursor: text;
+  z-index: 1;
+}
+
+.code-slot {
+  position: relative;
+  flex: 0 1 var(--cs-size);
+  min-width: 0;
+  height: calc(var(--cs-size) * 1.18);
+  border-radius: var(--cs-radius);
+  background: var(--cs-slot);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: grid;
+  place-items: center;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.code-slot.filled {
+  background: var(--cs-accent);
+  box-shadow: none;
+}
+
+.code-slots.is-focused .code-slot.active {
+  box-shadow: 0 0 0 2px var(--cs-accent);
+}
+
+.code-slots.is-focused .code-slot.active::after {
+  content: "";
+  width: 2px;
+  height: 38%;
+  border-radius: 2px;
+  background: var(--cs-ink);
+  animation: cs-caret 1s steps(2, start) infinite;
+}
+
+.code-slot-char {
+  color: var(--cs-digit);
+  font-family: var(--font-sans);
+  font-size: calc(var(--cs-size) * 0.45);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.code-slot.pop {
+  animation: cs-pop var(--cs-settle) var(--cs-ease) both;
+}
+
+.code-slot.pop .code-slot-char {
+  animation: cs-rise var(--cs-settle) var(--cs-ease) both;
+}
+
+.code-slots[data-status="success"] .code-slot {
+  animation: cs-bump var(--cs-settle) var(--cs-ease) both;
+  animation-delay: calc(var(--i) * var(--cs-cascade));
+}
+
+.code-slots[data-status="error"] .code-slot {
+  background: color-mix(in srgb, var(--cs-danger) 22%, var(--cs-slot));
+  box-shadow: inset 0 0 0 1.5px var(--cs-danger);
+  animation: cs-shake calc(var(--cs-settle) * 1.3) ease both;
+  animation-delay: calc(var(--i) * var(--cs-cascade));
+}
+
+.code-slots[data-status="error"] .code-slot.filled {
+  background: var(--cs-danger);
+}
+
+.code-slots[data-status="error"] .code-slot-char {
+  color: #fff;
+}
+
+.code-slots.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@keyframes cs-pop {
+  from { transform: scale(0.9); }
+  to { transform: scale(1); }
+}
+
+@keyframes cs-rise {
+  from { transform: translateY(var(--cs-rise)); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes cs-bump {
+  0% { transform: translateY(0); }
+  45% { transform: translateY(calc(var(--cs-rise) * -0.6)); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes cs-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes cs-caret {
+  to { visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-slot,
+  .code-slot .code-slot-char,
+  .code-slots .code-slot::after {
+    animation: none !important;
+  }
 }
 
 .space-name-card {
